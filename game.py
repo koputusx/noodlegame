@@ -99,7 +99,7 @@ class Rect:
 class Object:
     #this is a generic object: the player, a monster, an item, the stairs...
     #it's always represented by a character on screen.
-    def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, ai=None, item=None, equipment=None):
+    def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, ai=None, item=None, equipment=None, chartype=None):
         self.x = x
         self.y = y
         self.char = char
@@ -126,6 +126,8 @@ class Object:
             #there must be an Item component for the Equipment component to work properly
             self.item = Item()
             self.item.owner = self
+
+        self.chartype = chartype
  
     def move(self, dx, dy):
         #move by the given amount, if the destination is not blocked
@@ -263,14 +265,14 @@ class Fighter:
                   message(self.owner.name.capitalize() + ' missed!')
  
         elif hit < 0: #attack has 25% chance of hitting
-             if libtcod.random_get_int(0, 1, 4) == 4:
-               if damage > 0:
+            if libtcod.random_get_int(0, 1, 4) == 4:
+                if damage > 0:
                   #make the target take some damage
                   message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
                   target.fighter.take_damage(damage)
-               else:
+                else:
                   message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
-             else:
+            else:
                message(self.owner.name.capitalize() + ' missed!')
  
     def take_damage(self, damage):
@@ -789,7 +791,7 @@ def place_objects(room, special_monster):
             elif choice == 'paralyze':
                 #create scroll of paralyzation
                 item_component = Item(use_function=cast_paralyze)
-                item = Object(x, y, '#', 'scroll of paralyzation', libtcod.light_yellow, item=item_component)
+                item = Object(x, y, '#', 'scroll of paralyzation', libtcod.red, item=item_component)
  
             elif choice == 'magic missile':
                 #create a magic missile scroll
@@ -1151,7 +1153,7 @@ def check_level_up():
  
         # don't need this any more: current_menu_item = 0 # we need to track the size of the menu
         m = []
-        #hp_menu = menu_item_add(m, 'Constitution (+20 HP, from ' + str(player.fighter.max_hp) + ')') # only first item always in menu
+        hp_menu = menu_item_add(m, 'Constitution (+20 HP, from ' + str(player.fighter.max_hp) + ')') # only first item always in menu
         
         # if allowed to add power, then append Strength question to menu, set strength_menu to the next number in squence, and add 1 to size of menu
         strength_menu = optional_menu_item_add(m, 'Strength (+1 attack, from ' + str(player.fighter.power) + ')', (player.fighter.power < player.level))
@@ -1164,8 +1166,9 @@ def check_level_up():
             choice = menu('Level up! Choose a stat to raise:\n',
                           m, LEVEL_SCREEN_WIDTH)
  
-            player.fighter.base_max_hp += 20
-            player.fighter.hp += 20
+            if choice == hp_menu:
+                player.fighter.base_max_hp += 20
+                player.fighter.hp += 20
             if choice == strength_menu:
                 player.fighter.base_power += 1
                 player.fighter.base_max_hp += 20
@@ -1372,15 +1375,16 @@ def load_game():
 def warrior_class():
     global player
     fighter_component = Fighter(hp=20, defense=2, power=2, reflex=2, weapon_skill=2, xp=0, death_function=player_death)
-    player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
+    player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, chartype='warrior')
 
 def scholar_class():
     global player
     fighter_component = Fighter(hp=10, defense=2, power=1, reflex=2, weapon_skill=1, xp=0, death_function=player_death)
-    player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
+    player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, chartype='scholar')
 
 def char_creation(): #player chooses their character class
     img = libtcod.image_load('menu_background.png')
+
     
     #show background image, twice the regular console resolution
     libtcod.image_blit_2x(img, 0, 0, 0)
@@ -1418,12 +1422,20 @@ def new_game():
     #a warm welcoming message!
     message('Welcome stranger to the the eternal, twisted and slimy realm of noodles. Press h for help', libtcod.red)
  
-    #initial equipment: a dagger
-    equipment_component = Equipment(slot='right hand', power_bonus=2)
-    obj = Object(0, 0, '-', 'dagger', libtcod.sky, equipment=equipment_component)
-    inventory.append(obj)
-    equipment_component.equip()
-    obj.always_visible = True
+    #initial equipment:
+    if player.chartype == 'warrior':
+        equipment_component = Equipment(slot='right hand', power_bonus=3)
+        obj1 = Object(0, 0, '/', 'sword', libtcod.sky, equipment=equipment_component)
+        inventory.append(obj1)
+        equipment_component.equip()
+        obj1.always_visible = True
+    elif player.chartype == 'scholar':
+        equipment_component = Equipment(slot='right hand', power_bonus=2)
+        obj2 = Object(0, 0, '-', 'dagger', libtcod.sky, equipment=equipment_component)
+        inventory.append(obj2)
+        equipment_component.equip()
+        obj2.always_visible = True
+    print(player, inventory)
 
 #def end_game():
     #end of game
@@ -1527,6 +1539,7 @@ def main_menu():
         if choice == 0:  #new game
             char_creation()
             new_game()
+            print(player, inventory)
             play_game()
         if choice == 1:  #load last game
             try:
