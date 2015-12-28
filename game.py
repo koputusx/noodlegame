@@ -791,7 +791,7 @@ def place_objects(room, special_monster):
             elif choice == 'paralyze':
                 #create scroll of paralyzation
                 item_component = Item(use_function=cast_paralyze)
-                item = Object(x, y, '#', 'scroll of paralyzation', libtcod.red, item=item_component)
+                item = Object(x, y, '#', 'scroll of paralyzation, (don\'t use, crashes game)', libtcod.red, item=item_component)
  
             elif choice == 'magic missile':
                 #create a magic missile scroll
