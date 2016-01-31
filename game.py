@@ -99,7 +99,8 @@ class Rect:
 class Object:
     #this is a generic object: the player, a monster, an item, the stairs...
     #it's always represented by a character on screen.
-    def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, ai=None, item=None, equipment=None, chartype=None):
+    def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, ai=None, item=None, equipment=None, chartype=None, 
+                 monstype=None):
         self.x = x
         self.y = y
         self.char = char
@@ -128,6 +129,7 @@ class Object:
             self.item.owner = self
 
         self.chartype = chartype
+        self.monstype = monstype
  
     def move(self, dx, dy):
         #move by the given amount, if the destination is not blocked
@@ -144,6 +146,7 @@ class Object:
         my = 0
 
         #get the direction of the vector
+        print(target_x, self.x, mx, target_y, self.y, my)
         if dx > 0:
             mx = 1
         elif dx < 0:
@@ -168,6 +171,45 @@ class Object:
                     self.y += my
                 elif not is_blocked(self.x + mx, self.y):
                     self.x += mx
+
+    def move_astar(self, target):
+        #Create a FOV map that has the dimensions of the map
+        fov = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
+ 
+        #Scan the current map each turn and set all the walls as unwalkable
+        for y1 in range(MAP_HEIGHT):
+            for x1 in range(MAP_WIDTH):
+                libtcod.map_set_properties(fov, x1, y1, not map[x1][y1].block_sight, not map[x1][y1].blocked)
+ 
+        #Scan all the objects to see if there are objects that must be navigated around
+        #Check also that the object isn't self or the target (so that the start and the end points are free)
+        #The AI class handles the situation if self is next to the target so it will not use this A* function anyway   
+        for obj in objects:
+            if obj.blocks and obj != self and obj != target:
+                #Set the tile as a wall so it must be navigated around
+                libtcod.map_set_properties(fov, obj.x, obj.y, True, False)
+ 
+        #Allocate a A* path
+        #The 1.41 is the normal diagonal cost of moving, it can be set as 0.0 if diagonal moves are prohibited
+        my_path = libtcod.path_new_using_map(fov, 1.41)
+ 
+        #Compute the path between self's coordinates and the target's coordinates
+        libtcod.path_compute(my_path, self.x, self.y, target.x, target.y)
+ 
+        #Check if the path exists, and in this case, also the path is shorter than 25 tiles
+        #The path size matters if you want the monster to use alternative longer paths (for example through other rooms) if for example the player is in a corridor
+        #It makes sense to keep path size relatively low to keep the monsters from running around the map if there's an alternative path really far away        
+        if not libtcod.path_is_empty(my_path) and libtcod.path_size(my_path) < 25:
+            #Find the next coordinates in the computed full path
+            x, y = libtcod.path_walk(my_path, True)
+            if x or y:
+                #Set self's coordinates to the next path tile
+                self.x = x
+                self.y = y
+        else:
+            #Keep the old move function as a backup so that if there are no paths (for example another monster blocks a corridor)
+            #it will still try to move towards the player (closer to the corridor opening)
+            self.move_towards(target.x, target.y)
         	
     def distance_to(self, other):
         #return the distance to another object
@@ -205,7 +247,7 @@ class Object:
  
 class Fighter:
     #combat-related properties and methods (monster, player, NPC).
-    def __init__(self, hp, defense, power, reflex, xp, weapon_skill, death_function=None):
+    def __init__(self, hp, defense, power, reflex, xp, weapon_skill, strenth_var, agility_var, alertness_var, weapon_skill_var, death_function=None):
         self.base_max_hp = hp
         self.hp = hp
         self.base_defense = defense
@@ -213,6 +255,10 @@ class Fighter:
         self.base_reflex = reflex
         self.xp = xp
         self.base_weapon_skill = weapon_skill
+        self.strenth_var = strenth_var
+        self.agility_var = agility_var
+        self.alertness_var = alertness_var
+        self.weapon_skill_var = weapon_skill_var
         self.death_function = death_function
  
     @property
@@ -304,7 +350,7 @@ class BasicMonster:
  
             #move towards player if far away
             if monster.distance_to(player) >= 2:
-                monster.move_towards(player.x, player.y)
+                monster.move_astar(player)
  
             #close enough, attack! (if the player is still alive.)
             elif player.fighter.hp > 0:
@@ -347,8 +393,8 @@ class ParalyzedMonster:
         if self.num_turns > 0: #still paralyzed
             #monster is paralyzed and therefore can't do anything
             message('The ' + self.owner.name + ' is paralyzed!', libtcod.yellow)
-            self.reflex == 0
-            self.weapon_skill == 0
+            self.fighter.reflex == 0
+            self.fighter.weapon_skill == 0
             self.num_turns -= 1
 
         else:  #restore previous AI (this one is deleted because reasons).
@@ -519,10 +565,10 @@ def make_map():
     num_rooms = 0
     special_monster_room = 1
     #special_monster = None
-    if dungeon_level == 2:
+    if dungeon_level == 10:
         special_monster = 'Ogre'
         print(dungeon_level,special_monster)
-    elif dungeon_level == 1:
+    elif dungeon_level == 11:
         special_monster = 'Giant'
     else:
         special_monster = None
@@ -643,7 +689,8 @@ def place_objects(room, special_monster):
     monster_chances['ettin'] = from_dungeon_level([[15, 6], [30, 8], [60, 10]])
     monster_chances['melted one'] = from_dungeon_level([[15, 5], [30, 7], [60, 10]])
     monster_chances['flayed one'] = from_dungeon_level([[15, 8], [30, 10], [60, 11]])
-    monster_chances['rat'] = 90
+    monster_chances['goblin'] = 50
+    monster_chances['rat'] = 50
  
     #maximum number of items per room
     max_items = from_dungeon_level([[1, 1], [2, 4]])
@@ -653,7 +700,7 @@ def place_objects(room, special_monster):
     item_chances['heal'] = 40  #healing potion always shows up, even if all other items have 0 chance
     item_chances['lightning'] = from_dungeon_level([[25, 3]])
     item_chances['fireball'] =  from_dungeon_level([[25, 6]])
-    item_chances['confuse'] =   from_dungeon_level([[10, 2]])
+    item_chances['confuse'] =   from_dungeon_level([[50, 2]])
     item_chances['magic missile'] = from_dungeon_level([[5, 10]])
     item_chances['sword'] =     from_dungeon_level([[5, 4]])
     item_chances['shield'] =    from_dungeon_level([[15, 8]])
@@ -662,14 +709,15 @@ def place_objects(room, special_monster):
     item_chances['sword of slaying'] = from_dungeon_level([[5, 10]])
     item_chances['greater heal'] = from_dungeon_level([[25, 6]])
     item_chances['cloak'] = 30
-    item_chances['paralyze'] = from_dungeon_level([[50, 2]])
+    item_chances['paralyze'] = 90
 
     if special_monster is not None:
         print(special_monster)
         x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
         y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
         if special_monster == 'Giant':
-            fighter_component = Fighter(hp=200, defense=20, power=20, reflex=10, weapon_skill=5, xp=1000, death_function=monster_death)
+            fighter_component = Fighter(hp=200, defense=20, power=20, reflex=10, weapon_skill=5, xp=1000, strenth_var=0, agility_var=0, alertness_var=0,
+                                        weapon_skill_var=0, death_function=monster_death)
             ai_component = BasicMonster()
 
             monster = Object(x, y, 'G', 'Giant', libtcod.gold,
@@ -677,7 +725,8 @@ def place_objects(room, special_monster):
             objects.append(monster)
 
         elif special_monster == 'Ogre':
-            fighter_component = Fighter(hp=150, defense=15, power=15, reflex=10, weapon_skill=4, xp=500, death_function=monster_death)
+            fighter_component = Fighter(hp=150, defense=15, power=15, reflex=10, weapon_skill=4, xp=500, strenth_var=0, agility_var=0, alertness_var=0,
+                                        weapon_skill_var=0, death_function=monster_death)
             ai_component = BasicMonster()
 
             monster = Object(x, y, 'O', 'Ogre', libtcod.gold,
@@ -697,7 +746,8 @@ def place_objects(room, special_monster):
             choice = random_choice(monster_chances)
             if choice == 'orc':
                 #create an orc
-                fighter_component = Fighter(hp=10, defense=1, power=5, reflex=3, weapon_skill=2, xp=40, death_function=monster_death)
+                fighter_component = Fighter(hp=10, defense=1, power=5, reflex=3, weapon_skill=2, xp=40, strenth_var=0, agility_var=0, alertness_var=0, 
+                                            weapon_skill_var=0, death_function=monster_death)
                 ai_component = BasicMonster()
  
                 monster = Object(x, y, 'o', 'orc', libtcod.desaturated_green,
@@ -705,7 +755,8 @@ def place_objects(room, special_monster):
  
             elif choice == 'troll':
                 #create a troll
-                fighter_component = Fighter(hp=20, defense=2, power=8, reflex=3, weapon_skill=2, xp=105, death_function=monster_death)
+                fighter_component = Fighter(hp=20, defense=2, power=8, reflex=3, weapon_skill=2, xp=105, strenth_var=0, agility_var=0, alertness_var=0, 
+                                            weapon_skill_var=0, death_function=monster_death)
                 ai_component = BasicMonster()
  
                 monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
@@ -713,7 +764,8 @@ def place_objects(room, special_monster):
  
             elif choice == 'hideous':
                 #create a hideous
-                fighter_component = Fighter(hp=15, defense=1, power=6, reflex=4, weapon_skill=2, xp=55, death_function=monster_death)
+                fighter_component = Fighter(hp=15, defense=1, power=6, reflex=4, weapon_skill=2, xp=55, strenth_var=0, agility_var=0, alertness_var=0, 
+                                            weapon_skill_var=0, death_function=monster_death)
                 ai_component = BasicMonster()
 
                 monster = Object(x, y, 'h', 'hideous', libtcod.darker_green,
@@ -721,7 +773,8 @@ def place_objects(room, special_monster):
  
             elif choice == 'ettin':
                 #create an ettin
-                fighter_component = Fighter(hp=30, defense=3, power=9, reflex=5, weapon_skill=3, xp=155, death_function=monster_death)
+                fighter_component = Fighter(hp=30, defense=3, power=9, reflex=5, weapon_skill=3, xp=155, strenth_var=0, agility_var=0, alertness_var=0, 
+                                            weapon_skill_var=0, death_function=monster_death)
                 ai_component = BasicMonster()
  
                 monster = Object(x, y, 'E', 'ettin', libtcod.pink,
@@ -729,15 +782,26 @@ def place_objects(room, special_monster):
 
             elif choice == 'melted one':
                 #create a melted one
-                fighter_component = Fighter(hp=40, defense=4, power=8, reflex=0, weapon_skill=0, xp=150, death_function=monster_death)
+                fighter_component = Fighter(hp=40, defense=4, power=8, reflex=0, weapon_skill=0, xp=150, strenth_var=0, agility_var=0, alertness_var=0, 
+                                            weapon_skill_var=0, death_function=monster_death)
                 ai_component = StationaryMonster()
                 
                 monster = Object(x, y, 'X', 'Melted one', libtcod.lighter_red,
-				                 blocks=True, fighter=fighter_component, ai=ai_component)
+				                 blocks=True, fighter=fighter_component, ai=ai_component, monstype='stationary')
+
+            elif choice == 'goblin':
+                #create goblin
+                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=1, weapon_skill=1, xp=30, strenth_var=0, agility_var=0, alertness_var=0,
+                                            weapon_skill_var=0, death_function=monster_death)
+                ai_component = BasicMonster()
+
+                monster = Object(x, y, 'g', 'goblin', libtcod.light_blue,
+                                 blocks=True, fighter=fighter_component, ai=ai_component)
 								 
             elif choice == 'rat':
                 #create a rat
-                fighter_component = Fighter(hp=5, defense=0, power=1, reflex=1, weapon_skill=0, xp=25, death_function=monster_death)
+                fighter_component = Fighter(hp=5, defense=0, power=1, reflex=1, weapon_skill=0, xp=25, strenth_var=0, agility_var=0, alertness_var=0,
+                                            weapon_skill_var=0, death_function=monster_death)
                 ai_component = BasicMonster()
             
                 monster = Object(x, y, 'r', 'rat', libtcod.light_grey,
@@ -745,7 +809,8 @@ def place_objects(room, special_monster):
 
             elif choice == 'flayed one':
                 #create flayed one
-                fighter_component = Fighter(hp=40, defense=6, power=10, reflex=6, weapon_skill=4, xp=160, death_function=monster_death)
+                fighter_component = Fighter(hp=40, defense=6, power=10, reflex=5, weapon_skill=4, xp=160, strenth_var=0, agility_var=0, alertness_var=0, 
+                                            weapon_skill_var=0, death_function=monster_death)
                 ai_component = BasicMonster()
 
                 monster = Object(x, y, 'f', 'flayed one', libtcod.light_purple,
@@ -1156,10 +1221,14 @@ def check_level_up():
         hp_menu = menu_item_add(m, 'Constitution (+20 HP, from ' + str(player.fighter.max_hp) + ')') # only first item always in menu
         
         # if allowed to add power, then append Strength question to menu, set strength_menu to the next number in squence, and add 1 to size of menu
-        strength_menu = optional_menu_item_add(m, 'Strength (+1 attack, from ' + str(player.fighter.power) + ')', (player.fighter.power < player.level))
-        agility_menu =  optional_menu_item_add(m, 'Agility (+1 defense, from ' + str(player.fighter.defense) + ')', (player.fighter.defense < player.level))
-        alertness_menu = optional_menu_item_add(m, 'Alertness (+1 alertness, from ' + str(player.fighter.reflex) + ')', (player.fighter.reflex < player.level))
-        weapon_skill_menu = optional_menu_item_add(m, 'Weapon skill (+1 weapon skill, from ' + str(player.fighter.weapon_skill) + ')', (player.fighter.weapon_skill < player.level))
+        strength_menu = optional_menu_item_add(m, 'Strength (+1 attack, from ' + str(player.fighter.power) + ')', 
+                                               (player.fighter.power < (player.level+player.fighter.strenth_var)))
+        agility_menu =  optional_menu_item_add(m, 'Agility (+1 defense, from ' + str(player.fighter.defense) + ')',
+                                               (player.fighter.defense < (player.level+player.fighter.agility_var)))
+        alertness_menu = optional_menu_item_add(m, 'Alertness (+1 alertness, from ' + str(player.fighter.reflex) + ')', 
+                                                (player.fighter.reflex < (player.level+player.fighter.alertness_var)))
+        weapon_skill_menu = optional_menu_item_add(m, 'Weapon skill (+1 weapon skill, from ' + str(player.fighter.weapon_skill) + ')', 
+                                                   (player.fighter.weapon_skill < (player.level+player.fighter.weapon_skill_var)))
  
         choice = None
         while choice == None:  # keep asking until a choice is made
@@ -1311,7 +1380,10 @@ def cast_confuse():
     #ask the player for a target to confuse
     message('Left-click an enemy to confuse it, or right-click to cancel.', libtcod.light_cyan)
     monster = target_monster(CONFUSE_RANGE)
+    print(monster)
     if monster is None: return 'cancelled'
+    print(monster.monstype)
+    if monster.monstype=='stationary': return 'immune'
  
     #replace the monster's AI with a "confused" one; after some turns it will restore the old AI
     old_ai = monster.ai
@@ -1327,9 +1399,9 @@ def cast_paralyze():
 
     #replace the monster's AI with paralyzed one
     old_ai = monster.ai
-    old_reflex = monster.reflex
-    old_weapon_skill = monster.weapon_skill
-    monster.ai = ParalyzedMonster(old_ai)
+    old_reflex = monster.fighter.reflex
+    old_weapon_skill = monster.fighter.weapon_skill
+    monster.ai = ParalyzedMonster(old_ai, old_reflex, old_weapon_skill)
     monster.ai.owner = monster #tell the new component who owns it.
     message('The ' + monster.name + ' suddenly falls to the ground, unable to do anything!', libtcod.light_green)
 	
@@ -1374,12 +1446,14 @@ def load_game():
 
 def warrior_class():
     global player
-    fighter_component = Fighter(hp=20, defense=2, power=2, reflex=2, weapon_skill=2, xp=0, death_function=player_death)
+    fighter_component = Fighter(hp=20, defense=2, power=2, reflex=2, weapon_skill=2, xp=0, strenth_var=3, agility_var=2, alertness_var=1, 
+                                weapon_skill_var=3, death_function=player_death)
     player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, chartype='warrior')
 
 def scholar_class():
     global player
-    fighter_component = Fighter(hp=10, defense=2, power=1, reflex=2, weapon_skill=1, xp=0, death_function=player_death)
+    fighter_component = Fighter(hp=10, defense=2, power=1, reflex=2, weapon_skill=1, xp=0, strenth_var=0, agility_var=0, alertness_var=1, 
+                                weapon_skill_var=1, death_function=player_death)
     player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, chartype='scholar')
 
 def char_creation(): #player chooses their character class
@@ -1559,5 +1633,6 @@ libtcod.console_credits()
 libtcod.sys_set_fps(LIMIT_FPS)
 con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
+#myRnd = libtcod.random_new_from_seed()
  
 main_menu()
