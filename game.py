@@ -59,7 +59,7 @@ LEVEL_UP_FACTOR = 150
  
 FOV_ALGO = 0  #default FOV algorithm
 FOV_LIGHT_WALLS = True  #light walls or not
-TORCH_RADIUS = 10
+TORCH_RADIUS = 15
  
 LIMIT_FPS = 20  #20 frames-per-second maximum
  
@@ -321,6 +321,41 @@ class Fighter:
             else:
                message(self.owner.name.capitalize() + ' missed!')
  
+    def ranged_attack(self, target):
+        #a formula for ranged attack damage
+        hit = (self.reflex + self.weapon_skill) - (target.fighter.reflex + target.fighter.weapon_skill)
+        damage = self.power - target.fighter.defense
+ 
+        if hit > 0: #attack will hit
+            if damage > 0:
+                #make the target take some damage
+                message(self.owner.name.capitalize() + 's ' + ' arrow ' + ' hits ' + target.name + ' for ' + str(damage) + ' hit points.')
+                target.fighter.take_damage(damage)
+            else:
+                message(self.owner.name.capitalize() + 's ' + ' arrow ' + ' hits ' + target.name + ' but it has no effect!')
+ 
+        elif hit == 0: #attack has 50% chance of hitting
+            if libtcod.random_get_int(0, 0, 1) == 1:
+                if damage > 0:
+                   #make the target take some damage
+                   message(self.owner.name.capitalize() + 's ' + 'arrow ' + ' hits ' + target.name + ' for ' + str(damage) + ' hit points.')
+                   target.fighter.take_damage(damage)
+                else:
+                   message(self.owner.name.capitalize() + 's ' + ' arrow ' + ' hits ' + target.name + ' but it has no effect!')
+            else:
+                  message(self.owner.name.capitalize() + 's ' + ' arrow' + ' missed!')
+ 
+        elif hit < 0: #attack has 25% chance of hitting
+            if libtcod.random_get_int(0, 1, 4) == 4:
+                if damage > 0:
+                  #make the target take some damage
+                  message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
+                  target.fighter.take_damage(damage)
+                else:
+                  message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+            else:
+               message(self.owner.name.capitalize() + ' missed!')
+ 
     def take_damage(self, damage):
         #apply damage if possible
         if damage > 0:
@@ -354,6 +389,39 @@ class BasicMonster:
  
             #close enough, attack! (if the player is still alive.)
             elif player.fighter.hp > 0:
+                monster.fighter.attack(player)
+
+class RangedMonster:
+    #AI for monster using ranged attacks.
+    def take_turn(self):
+        #monster takes it's turn. if you can see it, it can see you
+        monster = self.owner
+        if libtcod.map_is_in_fov(fov_map, monster.x, monster.y1):
+
+            #move towards player if far away
+            if monster.distance_to(player) >= 10:
+                monster.move_astar(player)
+
+            #close enough, shoot arrows!(if player is still alive)
+            elif player.fighter.hp > 0:
+                monster.fighter.ranged_attack(player)
+
+            #player is closing in, decide whether you should retreat
+            elif monster.distance_to(player) = 2 and player.fighter.hp > 0:
+                #fall back!
+                if libtcod.random_get_int(0, 1, 3) == 1:
+
+                #continue shooting arrows
+                elif libtcod.random_get_int(0, 1, 3) == 2:
+                    if player.fighter.hp > 0:
+                       monster.fighter.ranged_attack(player)
+
+                #move to close combat
+                if libtcod.random_get_int(0, 1, 3) == 3:
+                    monster.astar(player)
+
+            #player is too close, melee them(if player is still alive)
+            elif monster.distance_to(player) < 2 and player.fighter.hp > 0:
                 monster.fighter.attack(player)
 
 class StationaryMonster:
@@ -689,8 +757,8 @@ def place_objects(room, special_monster):
     monster_chances['ettin'] = from_dungeon_level([[15, 6], [30, 8], [60, 10]])
     monster_chances['melted one'] = from_dungeon_level([[15, 5], [30, 7], [60, 10]])
     monster_chances['flayed one'] = from_dungeon_level([[15, 8], [30, 10], [60, 11]])
-    monster_chances['goblin'] = 50
-    monster_chances['rat'] = 50
+    monster_chances['goblin'] = 90
+    #monster_chances['rat'] = 50
  
     #maximum number of items per room
     max_items = from_dungeon_level([[1, 1], [2, 4]])
@@ -791,7 +859,7 @@ def place_objects(room, special_monster):
 
             elif choice == 'goblin':
                 #create goblin
-                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=1, weapon_skill=1, xp=30, strenth_var=0, agility_var=0, alertness_var=0,
+                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=2, xp=30, strenth_var=0, agility_var=0, alertness_var=0,
                                             weapon_skill_var=0, death_function=monster_death)
                 ai_component = BasicMonster()
 
