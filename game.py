@@ -407,14 +407,14 @@ class RangedMonster:
                 monster.fighter.ranged_attack(player)
 
             #player is closing in, decide whether you should retreat
-            elif monster.distance_to(player) = 2 and player.fighter.hp > 0:
+            elif monster.distance_to(player) == 2 and player.fighter.hp > 0:
                 #fall back!
                 if libtcod.random_get_int(0, 1, 3) == 1:
 
                 #continue shooting arrows
                 elif libtcod.random_get_int(0, 1, 3) == 2:
                     if player.fighter.hp > 0:
-                       monster.fighter.ranged_attack(player)
+                        monster.fighter.ranged_attack(player)
 
                 #move to close combat
                 if libtcod.random_get_int(0, 1, 3) == 3:
