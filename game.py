@@ -501,14 +501,14 @@ class ParalyzedMonster:
         if self.num_turns > 0: #still paralyzed
             #monster is paralyzed and therefore can't do anything
             message('The ' + self.owner.name + ' is paralyzed!', libtcod.yellow)
-            self.fighter.reflex == 0
-            self.fighter.weapon_skill == 0
+            self.owner.fighter.reflex == 0
+            self.owner.fighter.weapon_skill == 0
             self.num_turns -= 1
 
         else:  #restore previous AI (this one is deleted because reasons).
             self.owner.ai = self.old_ai
-            self.reflex = self.old_reflex
-            self.weapon_skill = self.old_weapon_skill
+            self.owner.reflex = self.old_reflex
+            self.owner.weapon_skill = self.old_weapon_skill
             message('The ' + self.owner.name + ' is no longer paralyzed!', libtcod.red)
 			
 class Item:
@@ -797,8 +797,8 @@ def place_objects(room, special_monster):
     monster_chances['ettin'] = from_dungeon_level([[15, 6], [30, 8], [60, 10]])
     monster_chances['melted one'] = from_dungeon_level([[15, 5], [30, 7], [60, 10]])
     monster_chances['flayed one'] = from_dungeon_level([[15, 8], [30, 10], [60, 11]])
-    #monster_chances['goblin'] = 90
-    monster_chances['goblin archer'] = 70
+    monster_chances['goblin'] = 90
+    #monster_chances['goblin archer'] = 70
     #monster_chances['rat'] = 50
  
     #maximum number of items per room
@@ -974,7 +974,7 @@ def place_objects(room, special_monster):
             elif choice == 'paralyze':
                 #create scroll of paralyzation
                 item_component = Item(use_function=cast_paralyze)
-                item = Object(x, y, '#', 'scroll of paralyzation, (don\'t use, crashes game)', libtcod.red, item=item_component)
+                item = Object(x, y, '#', 'scroll of paralyzation', libtcod.red, item=item_component)
  
             elif choice == 'magic missile':
                 #create a magic missile scroll
