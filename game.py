@@ -100,7 +100,7 @@ class Object:
     #this is a generic object: the player, a monster, an item, the stairs...
     #it's always represented by a character on screen.
     def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, ai=None, item=None, equipment=None, chartype=None, 
-                 monstype=None):
+                 monstype=None, variables=None):
         self.x = x
         self.y = y
         self.char = char
@@ -130,6 +130,7 @@ class Object:
 
         self.chartype = chartype
         self.monstype = monstype
+        self.variables = variables
  
     def move(self, dx, dy):
         #move by the given amount, if the destination is not blocked
@@ -285,7 +286,7 @@ class Object:
  
 class Fighter:
     #combat-related properties and methods (monster, player, NPC).
-    def __init__(self, hp, defense, power, reflex, xp, weapon_skill, strenth_var, agility_var, alertness_var, weapon_skill_var, death_function=None):
+    def __init__(self, hp, defense, power, reflex, xp, weapon_skill, death_function=None):
         self.base_max_hp = hp
         self.hp = hp
         self.base_defense = defense
@@ -293,10 +294,6 @@ class Fighter:
         self.base_reflex = reflex
         self.xp = xp
         self.base_weapon_skill = weapon_skill
-        self.strenth_var = strenth_var
-        self.agility_var = agility_var
-        self.alertness_var = alertness_var
-        self.weapon_skill_var = weapon_skill_var
         self.death_function = death_function
  
     @property
@@ -413,6 +410,14 @@ class Fighter:
         self.hp += amount
         if self.hp > self.max_hp:
             self.hp = self.max_hp
+
+class Variables:
+    #class for variables
+    def __init__(self, strength_var, agility_var, alertness_var, weapon_skill_var):
+        self.strength_var = strength_var
+        self.agility_var = agility_var
+        self.alertness_var = alertness_var
+        self.weapon_skill_var = weapon_skill_var
  
 class BasicMonster:
     #AI for a basic monster.
@@ -825,8 +830,7 @@ def place_objects(room, special_monster):
         x = libtcod.random_get_int(0, room.x1+1, room.x2-1)
         y = libtcod.random_get_int(0, room.y1+1, room.y2-1)
         if special_monster == 'Giant':
-            fighter_component = Fighter(hp=200, defense=20, power=20, reflex=10, weapon_skill=5, xp=1000, strenth_var=0, agility_var=0, alertness_var=0,
-                                        weapon_skill_var=0, death_function=monster_death)
+            fighter_component = Fighter(hp=200, defense=20, power=20, reflex=10, weapon_skill=5, xp=1000, death_function=monster_death)
             ai_component = BasicMonster()
 
             monster = Object(x, y, 'G', 'Giant', libtcod.gold,
@@ -834,8 +838,7 @@ def place_objects(room, special_monster):
             objects.append(monster)
 
         elif special_monster == 'Ogre':
-            fighter_component = Fighter(hp=150, defense=15, power=15, reflex=10, weapon_skill=4, xp=500, strenth_var=0, agility_var=0, alertness_var=0,
-                                        weapon_skill_var=0, death_function=monster_death)
+            fighter_component = Fighter(hp=150, defense=15, power=15, reflex=10, weapon_skill=4, xp=500, death_function=monster_death)
             ai_component = BasicMonster()
 
             monster = Object(x, y, 'O', 'Ogre', libtcod.gold,
@@ -855,8 +858,7 @@ def place_objects(room, special_monster):
             choice = random_choice(monster_chances)
             if choice == 'orc':
                 #create an orc
-                fighter_component = Fighter(hp=10, defense=1, power=5, reflex=3, weapon_skill=2, xp=40, strenth_var=0, agility_var=0, alertness_var=0, 
-                                            weapon_skill_var=0, death_function=monster_death)
+                fighter_component = Fighter(hp=10, defense=1, power=5, reflex=3, weapon_skill=2, xp=40, death_function=monster_death)
                 ai_component = BasicMonster()
  
                 monster = Object(x, y, 'o', 'orc', libtcod.desaturated_green,
@@ -864,8 +866,7 @@ def place_objects(room, special_monster):
  
             elif choice == 'troll':
                 #create a troll
-                fighter_component = Fighter(hp=20, defense=2, power=8, reflex=3, weapon_skill=2, xp=105, strenth_var=0, agility_var=0, alertness_var=0, 
-                                            weapon_skill_var=0, death_function=monster_death)
+                fighter_component = Fighter(hp=20, defense=2, power=8, reflex=3, weapon_skill=2, xp=105, death_function=monster_death)
                 ai_component = BasicMonster()
  
                 monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
@@ -873,8 +874,7 @@ def place_objects(room, special_monster):
  
             elif choice == 'hideous':
                 #create a hideous
-                fighter_component = Fighter(hp=15, defense=1, power=6, reflex=4, weapon_skill=2, xp=55, strenth_var=0, agility_var=0, alertness_var=0, 
-                                            weapon_skill_var=0, death_function=monster_death)
+                fighter_component = Fighter(hp=15, defense=1, power=6, reflex=4, weapon_skill=2, xp=55, death_function=monster_death)
                 ai_component = BasicMonster()
 
                 monster = Object(x, y, 'h', 'hideous', libtcod.darker_green,
@@ -882,8 +882,7 @@ def place_objects(room, special_monster):
  
             elif choice == 'ettin':
                 #create an ettin
-                fighter_component = Fighter(hp=30, defense=3, power=9, reflex=5, weapon_skill=3, xp=155, strenth_var=0, agility_var=0, alertness_var=0, 
-                                            weapon_skill_var=0, death_function=monster_death)
+                fighter_component = Fighter(hp=30, defense=3, power=9, reflex=5, weapon_skill=3, xp=155, death_function=monster_death)
                 ai_component = BasicMonster()
  
                 monster = Object(x, y, 'E', 'ettin', libtcod.pink,
@@ -891,8 +890,7 @@ def place_objects(room, special_monster):
 
             elif choice == 'melted one':
                 #create a melted one
-                fighter_component = Fighter(hp=40, defense=4, power=8, reflex=0, weapon_skill=0, xp=150, strenth_var=0, agility_var=0, alertness_var=0, 
-                                            weapon_skill_var=0, death_function=monster_death)
+                fighter_component = Fighter(hp=40, defense=4, power=8, reflex=0, weapon_skill=0, xp=150, death_function=monster_death)
                 ai_component = StationaryMonster()
                 
                 monster = Object(x, y, 'X', 'Melted one', libtcod.lighter_red,
@@ -900,8 +898,7 @@ def place_objects(room, special_monster):
 
             elif choice == 'goblin':
                 #create goblin
-                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=2, xp=30, strenth_var=0, agility_var=0, alertness_var=0,
-                                            weapon_skill_var=0, death_function=monster_death)
+                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=2, xp=30, death_function=monster_death)
                 ai_component = BasicMonster()
 
                 monster = Object(x, y, 'g', 'goblin', libtcod.light_blue,
@@ -909,8 +906,7 @@ def place_objects(room, special_monster):
 								 
             elif choice == 'rat':
                 #create a rat
-                fighter_component = Fighter(hp=5, defense=0, power=1, reflex=1, weapon_skill=0, xp=25, strenth_var=0, agility_var=0, alertness_var=0,
-                                            weapon_skill_var=0, death_function=monster_death)
+                fighter_component = Fighter(hp=5, defense=0, power=1, reflex=1, weapon_skill=0, xp=25, death_function=monster_death)
                 ai_component = BasicMonster()
             
                 monster = Object(x, y, 'r', 'rat', libtcod.light_grey,
@@ -918,8 +914,7 @@ def place_objects(room, special_monster):
 
             elif choice == 'flayed one':
                 #create flayed one
-                fighter_component = Fighter(hp=40, defense=6, power=10, reflex=5, weapon_skill=4, xp=160, strenth_var=0, agility_var=0, alertness_var=0, 
-                                            weapon_skill_var=0, death_function=monster_death)
+                fighter_component = Fighter(hp=40, defense=6, power=10, reflex=5, weapon_skill=4, xp=160, death_function=monster_death)
                 ai_component = BasicMonster()
 
                 monster = Object(x, y, 'f', 'flayed one', libtcod.light_purple,
@@ -927,8 +922,7 @@ def place_objects(room, special_monster):
 
             elif choice == 'goblin archer':
                 #create goblin archer
-                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=2, xp=30, strenth_var=0, agility_var=0, alertness_var=0,
-                                            weapon_skill_var=0, death_function=monster_death)
+                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=2, xp=30, death_function=monster_death)
                 ai_component = RangedMonster()
 
                 monster = Object(x, y, 'g', 'goblin archer', libtcod.light_green,
@@ -1340,13 +1334,13 @@ def check_level_up():
         
         # if allowed to add power, then append Strength question to menu, set strength_menu to the next number in squence, and add 1 to size of menu
         strength_menu = optional_menu_item_add(m, 'Strength (+1 attack, from ' + str(player.fighter.power) + ')', 
-                                               (player.fighter.power < (player.level+player.fighter.strenth_var)))
+                                               (player.fighter.power < (player.level+player.variables.strength_var)))
         agility_menu =  optional_menu_item_add(m, 'Agility (+1 defense, from ' + str(player.fighter.defense) + ')',
-                                               (player.fighter.defense < (player.level+player.fighter.agility_var)))
+                                               (player.fighter.defense < (player.level+player.variables.agility_var)))
         alertness_menu = optional_menu_item_add(m, 'Alertness (+1 alertness, from ' + str(player.fighter.reflex) + ')', 
-                                                (player.fighter.reflex < (player.level+player.fighter.alertness_var)))
+                                                (player.fighter.reflex < (player.level+player.variables.alertness_var)))
         weapon_skill_menu = optional_menu_item_add(m, 'Weapon skill (+1 weapon skill, from ' + str(player.fighter.weapon_skill) + ')', 
-                                                   (player.fighter.weapon_skill < (player.level+player.fighter.weapon_skill_var)))
+                                                   (player.fighter.weapon_skill < (player.level+player.variables.weapon_skill_var)))
  
         choice = None
         while choice == None:  # keep asking until a choice is made
@@ -1564,15 +1558,15 @@ def load_game():
 
 def warrior_class():
     global player
-    fighter_component = Fighter(hp=20, defense=2, power=2, reflex=2, weapon_skill=2, xp=0, strenth_var=3, agility_var=2, alertness_var=1, 
-                                weapon_skill_var=3, death_function=player_death)
-    player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, chartype='warrior')
+    fighter_component = Fighter(hp=20, defense=2, power=2, reflex=2, weapon_skill=2, xp=0, death_function=player_death)
+    variables_component = Variables(strength_var=3, agility_var=2, alertness_var=1, weapon_skill_var=3)
+    player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, variables=variables_component, chartype='warrior')
 
 def scholar_class():
     global player
-    fighter_component = Fighter(hp=10, defense=2, power=1, reflex=2, weapon_skill=1, xp=0, strenth_var=0, agility_var=0, alertness_var=1, 
-                                weapon_skill_var=1, death_function=player_death)
-    player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, chartype='scholar')
+    fighter_component = Fighter(hp=10, defense=2, power=1, reflex=2, weapon_skill=1, xp=0, death_function=player_death)
+    variables_component = Variables(strength_var=0, agility_var=0, alertness_var=1, weapon_skill_var=1)
+    player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, variables=variables_component, chartype='scholar')
 
 def char_creation(): #player chooses their character class
     img = libtcod.image_load('menu_background.png')
