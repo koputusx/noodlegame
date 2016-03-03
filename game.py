@@ -172,6 +172,44 @@ class Object:
                 elif not is_blocked(self.x + mx, self.y):
                     self.x += mx
 
+    def move_away(self, target_x, target_y):
+        #vector from this object to the target, and distance
+
+        dx = target_x - self.x
+        dy = target_y - self.y
+        dx = -dx
+        dy = -dy
+
+        mx = 0
+        my = 0
+
+        #get the direction of the vector
+        print(target_x, self.x, mx, target_y, self.y, my)
+        if dx > 0:
+            mx = 1
+        elif dx < 0:
+            mx = -1
+        if dy > 0:
+            my = 1
+        elif dy < 0:
+            my = -1
+ 
+        #try diagonal first
+        if not is_blocked(self.x + mx, self.y + my):
+            self.x += mx
+            self.y += my
+        else:
+            if abs(dx) > abs(dy):
+                if not is_blocked(self.x + mx, self.y):
+                    self.x += mx
+                elif not is_blocked(self.x, self.y+my):
+                    self.y += my
+            else:
+                if not is_blocked(self.x, self.y+my):
+                    self.y += my
+                elif not is_blocked(self.x + mx, self.y):
+                    self.x += mx
+
     def move_astar(self, target):
         #Create a FOV map that has the dimensions of the map
         fov = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
@@ -396,34 +434,35 @@ class RangedMonster:
     def take_turn(self):
         #monster takes it's turn. if you can see it, it can see you
         monster = self.owner
-        if libtcod.map_is_in_fov(fov_map, monster.x, monster.y1):
+        if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
 
             #move towards player if far away
             if monster.distance_to(player) >= 10:
                 monster.move_astar(player)
 
-            #close enough, shoot arrows!(if player is still alive)
-            elif player.fighter.hp > 0:
-                monster.fighter.ranged_attack(player)
-
             #player is closing in, decide whether you should retreat
             elif monster.distance_to(player) == 2 and player.fighter.hp > 0:
+                diceresult = libtcod.random_get_int(0, 1, 3)
                 #fall back!
-                if libtcod.random_get_int(0, 1, 3) == 1:
-                    pass
+                if diceresult == 1:
+                    monster.move_away(player.x, player.y)
 
                 #continue shooting arrows
-                elif libtcod.random_get_int(0, 1, 3) == 2:
+                elif diceresult == 2:
                     if player.fighter.hp > 0:
                         monster.fighter.ranged_attack(player)
 
                 #move to close combat
-                if libtcod.random_get_int(0, 1, 3) == 3:
-                    monster.astar(player)
+                elif diceresult == 3:
+                    monster.move_astar(player)
 
             #player is too close, melee them(if player is still alive)
             elif monster.distance_to(player) < 2 and player.fighter.hp > 0:
                 monster.fighter.attack(player)
+
+            #close enough, shoot arrows!(if player is still alive)
+            elif player.fighter.hp > 0:
+                monster.fighter.ranged_attack(player)
 
 class StationaryMonster:
     #AI for stationary monster.
@@ -758,7 +797,8 @@ def place_objects(room, special_monster):
     monster_chances['ettin'] = from_dungeon_level([[15, 6], [30, 8], [60, 10]])
     monster_chances['melted one'] = from_dungeon_level([[15, 5], [30, 7], [60, 10]])
     monster_chances['flayed one'] = from_dungeon_level([[15, 8], [30, 10], [60, 11]])
-    monster_chances['goblin'] = 90
+    #monster_chances['goblin'] = 90
+    monster_chances['goblin archer'] = 70
     #monster_chances['rat'] = 50
  
     #maximum number of items per room
@@ -883,6 +923,15 @@ def place_objects(room, special_monster):
                 ai_component = BasicMonster()
 
                 monster = Object(x, y, 'f', 'flayed one', libtcod.light_purple,
+                                 blocks=True, fighter=fighter_component, ai=ai_component)
+
+            elif choice == 'goblin archer':
+                #create goblin archer
+                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=2, xp=30, strenth_var=0, agility_var=0, alertness_var=0,
+                                            weapon_skill_var=0, death_function=monster_death)
+                ai_component = RangedMonster()
+
+                monster = Object(x, y, 'g', 'goblin archer', libtcod.light_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
             objects.append(monster)
  
