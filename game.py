@@ -38,6 +38,11 @@ LEVEL_SCREEN_WIDTH = 40
 ROOM_MAX_SIZE = 20
 ROOM_MIN_SIZE = 4
 MAX_ROOMS = 60
+
+#constants for bsp
+DEPTH = 10
+MIN_SIZE = 5
+FULL_ROOMS = False
  
 #spell values
 HEAL_AMOUNT = 40
@@ -250,7 +255,11 @@ class Object:
             #Keep the old move function as a backup so that if there are no paths (for example another monster blocks a corridor)
             #it will still try to move towards the player (closer to the corridor opening)
             self.move_towards(target.x, target.y)
-        	
+
+    def move_twice(self, target):
+        self.move_astar(target)
+        self.move_astar(target)
+       	
     def distance_to(self, other):
         #return the distance to another object
         dx = other.x - self.x
@@ -287,7 +296,7 @@ class Object:
  
 class Fighter:
     #combat-related properties and methods (monster, player, NPC).
-    def __init__(self, hp, defense, power, reflex, weapon_skill, shield_skill, speed_value, xp, death_function=None):
+    def __init__(self, hp, defense, power, reflex, weapon_skill, shield_skill, move_probability, speed_value, xp, death_function=None):
         self.base_max_hp = hp
         self.hp = hp
         self.base_defense = defense
@@ -295,6 +304,7 @@ class Fighter:
         self.base_reflex = reflex
         self.base_weapon_skill = weapon_skill
         self.base_shield_skill = shield_skill
+        self.move_probability = move_probability
         self.speed_value = speed_value
         self.xp = xp
 
@@ -438,11 +448,29 @@ class BasicMonster:
         if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
  
             #move towards player if far away
-            if monster.distance_to(player) >= 2:
+            if monster.distance_to(player) >= 2 and random.randint(1,10) < monster.fighter.move_probability:
                 monster.move_astar(player)
  
             #close enough, attack! (if the player is still alive.)
-            elif player.fighter.hp > 0:
+            elif monster.distance_to(player) < 2 and player.fighter.hp > 0:
+                monster.fighter.attack(player)
+
+class FastMonster:
+    #AI for a fast monster
+    def take_turn(self):
+        #a basic monster takes its turn. if you can see it, it can see you
+        monster = self.owner
+        if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+ 
+            #move towards player if far away
+            if monster.distance_to(player) >= 3:
+                monster.move_twice(player)
+
+            if monster.distance_to(player) == 2:
+               monster.move_astar(player)
+ 
+            #close enough, attack! (if the player is still alive.)
+            elif monster.distance_to(player) < 2 and player.fighter.hp > 0:
                 monster.fighter.attack(player)
 
 class RangedMonster:
@@ -480,14 +508,6 @@ class RangedMonster:
             elif player.fighter.hp > 0:
                 monster.fighter.ranged_attack(player)
 
-class StationaryMonster:
-    #AI for stationary monster.
-    def take_turn(self):
-        monster = self.owner
-        if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
-           
-           if (monster.distance_to(player) < 2) and player.fighter.hp > 0:
-              monster.fighter.attack(player)
 			  
 class ConfusedMonster:
     #AI for a temporarily confused monster (reverts to previous AI after a while).
@@ -777,6 +797,163 @@ def make_map():
                 sys.stdout.write(".")
         print
     return map, Object, stairs
+
+def make_bsp():
+    global map, objects, stairs, bsp_rooms
+ 
+    objects = [player]
+ 
+    map = [[Tile(True) for y in range(MAP_HEIGHT)] for x in range(MAP_WIDTH)]
+ 
+    #Empty global list for storing room coordinates
+    bsp_rooms = []
+ 
+    #New root node
+    bsp = libtcod.bsp_new_with_size(0, 0, MAP_WIDTH, MAP_HEIGHT)
+ 
+    #Split into nodes
+    libtcod.bsp_split_recursive(bsp, 0, DEPTH, MIN_SIZE + 1, MIN_SIZE + 1, 1.5, 1.5)
+ 
+    #Traverse the nodes and create rooms                            
+    libtcod.bsp_traverse_inverted_level_order(bsp, traverse_node)
+ 
+    #Random room for the stairs
+    stairs_location = random.choice(bsp_rooms)
+    bsp_rooms.remove(stairs_location)
+    stairs = Object(stairs_location[0], stairs_location[1], '<', 'stairs', libtcod.white, always_visible=True)
+    objects.append(stairs)
+    stairs.send_to_back()
+ 
+    #Random room for player start
+    player_room = random.choice(bsp_rooms)
+    bsp_rooms.remove(player_room)
+    player.x = player_room[0]
+    player.y = player_room[1]
+ 
+    #Add monsters and items
+    for room in bsp_rooms:
+        new_room = Rect(room[0], room[1], 2, 2)
+        place_objects(new_room, None)
+ 
+    initialize_fov()
+
+def traverse_node(node, dat):
+    global map, bsp_rooms
+ 
+    #Create rooms
+    if libtcod.bsp_is_leaf(node):
+        minx = node.x + 1
+        maxx = node.x + node.w - 1
+        miny = node.y + 1
+        maxy = node.y + node.h - 1
+ 
+        if maxx == MAP_WIDTH - 1:
+            maxx -= 2
+        if maxy == MAP_HEIGHT - 1:
+            maxy -= 2
+ 
+        #If it's False the rooms sizes are random, else the rooms are filled to the node's size
+        if FULL_ROOMS == False:
+            minx = libtcod.random_get_int(None, minx, maxx - MIN_SIZE + 1)
+            miny = libtcod.random_get_int(None, miny, maxy - MIN_SIZE + 1)
+            maxx = libtcod.random_get_int(None, minx + MIN_SIZE - 2, maxx)
+            maxy = libtcod.random_get_int(None, miny + MIN_SIZE - 2, maxy)
+ 
+        node.x = minx
+        node.y = miny
+        node.w = maxx-minx + 1
+        node.h = maxy-miny + 1
+ 
+        #Dig room
+        for x in range(minx, maxx + 1):
+            for y in range(miny, maxy + 1):
+                map[x][y].blocked = False
+                map[x][y].block_sight = False
+ 
+        #Add center coordinates to the list of rooms
+        bsp_rooms.append(((minx + maxx) / 2, (miny + maxy) / 2))
+ 
+    #Create corridors    
+    else:
+        left = libtcod.bsp_left(node)
+        right = libtcod.bsp_right(node)
+        node.x = min(left.x, right.x)
+        node.y = min(left.y, right.y)
+        node.w = max(left.x + left.w, right.x + right.w) - node.x
+        node.h = max(left.y + left.h, right.y + right.h) - node.y
+        if node.horizontal:
+            if left.x + left.w - 1 < right.x or right.x + right.w - 1 < left.x:
+                x1 = libtcod.random_get_int(None, left.x, left.x + left.w - 1)
+                x2 = libtcod.random_get_int(None, right.x, right.x + right.w - 1)
+                y = libtcod.random_get_int(None, left.y + left.h, right.y)
+                vline_up(map, x1, y - 1)
+                hline(map, x1, y, x2)
+                vline_down(map, x2, y + 1)
+ 
+            else:
+                minx = max(left.x, right.x)
+                maxx = min(left.x + left.w - 1, right.x + right.w - 1)
+                x = libtcod.random_get_int(None, minx, maxx)
+                vline_down(map, x, right.y)
+                vline_up(map, x, right.y - 1)
+ 
+        else:
+            if left.y + left.h - 1 < right.y or right.y + right.h - 1 < left.y:
+                y1 = libtcod.random_get_int(None, left.y, left.y + left.h - 1)
+                y2 = libtcod.random_get_int(None, right.y, right.y + right.h - 1)
+                x = libtcod.random_get_int(None, left.x + left.w, right.x)
+                hline_left(map, x - 1, y1)
+                vline(map, x, y1, y2)
+                hline_right(map, x + 1, y2)
+            else:
+                miny = max(left.y, right.y)
+                maxy = min(left.y + left.h - 1, right.y + right.h - 1)
+                y = libtcod.random_get_int(None, miny, maxy)
+                hline_left(map, right.x - 1, y)
+                hline_right(map, right.x, y)
+ 
+    return True
+
+
+
+def vline(map, x, y1, y2):
+    if y1 > y2:
+        y1,y2 = y2,y1
+ 
+    for y in range(y1,y2+1):
+        map[x][y].blocked = False
+        map[x][y].block_sight = False
+ 
+def vline_up(map, x, y):
+    while y >= 0 and map[x][y].blocked == True:
+        map[x][y].blocked = False
+        map[x][y].block_sight = False
+        y -= 1
+ 
+def vline_down(map, x, y):
+    while y < MAP_HEIGHT and map[x][y].blocked == True:
+        map[x][y].blocked = False
+        map[x][y].block_sight = False
+        y += 1
+ 
+def hline(map, x1, y, x2):
+    if x1 > x2:
+        x1,x2 = x2,x1
+    for x in range(x1,x2+1):
+        map[x][y].blocked = False
+        map[x][y].block_sight = False
+ 
+def hline_left(map, x, y):
+    while x >= 0 and map[x][y].blocked == True:
+        map[x][y].blocked = False
+        map[x][y].block_sight = False
+        x -= 1
+ 
+def hline_right(map, x, y):
+    while x < MAP_WIDTH and map[x][y].blocked == True:
+        map[x][y].blocked = False
+        map[x][y].block_sight = False
+        x += 1
  
 def random_choice_index(chances):  #choose one option from list of chances, returning its index
     #the dice will land on some number between 1 and the sum of the chances
@@ -815,14 +992,15 @@ def place_objects(room, special_monster):
  
     #chance of each monster
     monster_chances = {}
-    monster_chances['orc'] = from_dungeon_level([[60, 2], [70, 3], [80, 4]])
-    monster_chances['troll'] = from_dungeon_level([[15, 5], [30, 7], [60, 9]])
-    monster_chances['hideous'] = from_dungeon_level([[20, 4], [40, 6], [70, 8]])
-    monster_chances['ettin'] = from_dungeon_level([[15, 6], [30, 8], [60, 10]])
-    monster_chances['melted one'] = from_dungeon_level([[15, 5], [30, 7], [60, 10]])
-    monster_chances['flayed one'] = from_dungeon_level([[15, 8], [30, 10], [60, 11]])
-    monster_chances['goblin'] = 80
-    monster_chances['goblin archer'] = 30
+    #monster_chances['orc'] = from_dungeon_level([[60, 2], [70, 3], [80, 4]])
+    #monster_chances['troll'] = from_dungeon_level([[15, 5], [30, 7], [60, 9]])
+    #monster_chances['hideous'] = from_dungeon_level([[20, 4], [40, 6], [70, 8]])
+    #monster_chances['ettin'] = from_dungeon_level([[15, 6], [30, 8], [60, 10]])
+    monster_chances['melted one'] = 50
+    #monster_chances['flayed one'] = from_dungeon_level([[15, 8], [30, 10], [60, 11]])
+    monster_chances['goblin'] = 20
+    monster_chances['goblin archer'] = 10
+    monster_chances['jackal'] =20
     #monster_chances['rat'] = 50
  
     #maximum number of items per room
@@ -875,78 +1053,99 @@ def place_objects(room, special_monster):
         #only place it if the tile is not blocked
         if not is_blocked(x, y):
             choice = random_choice(monster_chances)
-            if choice == 'orc':
+            #if choice == 'orc':
                 #create an orc
-                fighter_component = Fighter(hp=15, defense=1, power=5, reflex=3, weapon_skill=0, shield_skill=0, speed_value=0, xp=40, death_function=monster_death)
-                ai_component = BasicMonster()
+                #fighter_component = Fighter(hp=15, defense=1, power=5, reflex=3, weapon_skill=0, 
+                                             #shield_skill=0, speed_value=0, xp=40, death_function=monster_death)
+                #ai_component = BasicMonster()
  
-                monster = Object(x, y, 'o', 'orc', libtcod.desaturated_green,
-                                 blocks=True, fighter=fighter_component, ai=ai_component)
+                #monster = Object(x, y, 'o', 'orc', libtcod.desaturated_green,
+                                 #blocks=True, fighter=fighter_component, ai=ai_component)
  
-            elif choice == 'troll':
+            #elif choice == 'troll':
                 #create a troll
-                fighter_component = Fighter(hp=20, defense=2, power=8, reflex=3, weapon_skill=0, shield_skill=0, speed_value=0, xp=105, death_function=monster_death)
-                ai_component = BasicMonster()
+                #fighter_component = Fighter(hp=20, defense=2, power=8, reflex=3, weapon_skill=0,
+                                             #shield_skill=0, speed_value=0, xp=105, death_function=monster_death)
+                #ai_component = BasicMonster()
  
-                monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
-                                 blocks=True, fighter=fighter_component, ai=ai_component)
+                #monster = Object(x, y, 'T', 'troll', libtcod.darker_green,
+                                 #blocks=True, fighter=fighter_component, ai=ai_component)
  
-            elif choice == 'hideous':
+            #elif choice == 'hideous':
                 #create a hideous
-                fighter_component = Fighter(hp=15, defense=1, power=6, reflex=4, weapon_skill=0, shield_skill=0, speed_value=0, xp=55, death_function=monster_death)
-                ai_component = BasicMonster()
+                #fighter_component = Fighter(hp=15, defense=1, power=6, reflex=4, weapon_skill=0, 
+                                             #shield_skill=0, speed_value=0, xp=55, death_function=monster_death)
+                #ai_component = BasicMonster()
 
-                monster = Object(x, y, 'h', 'hideous', libtcod.darker_green,
-                                 blocks=True, fighter=fighter_component, ai=ai_component)
+                #monster = Object(x, y, 'h', 'hideous', libtcod.darker_green,
+                                 #blocks=True, fighter=fighter_component, ai=ai_component)
  
-            elif choice == 'ettin':
+            #elif choice == 'ettin':
                 #create an ettin
-                fighter_component = Fighter(hp=30, defense=3, power=9, reflex=5, weapon_skill=0, shield_skill=0, speed_value=0, xp=155, death_function=monster_death)
-                ai_component = BasicMonster()
+                #fighter_component = Fighter(hp=30, defense=3, power=9, reflex=5, weapon_skill=0, 
+                                             #shield_skill=0, speed_value=0, xp=155, death_function=monster_death)
+                #ai_component = BasicMonster()
  
-                monster = Object(x, y, 'E', 'ettin', libtcod.pink,
-                                 blocks=True, fighter=fighter_component, ai=ai_component)
+                #monster = Object(x, y, 'E', 'ettin', libtcod.pink,
+                                 #blocks=True, fighter=fighter_component, ai=ai_component)
 
-            elif choice == 'melted one':
+            if choice == 'melted one':
                 #create a melted one
-                fighter_component = Fighter(hp=40, defense=4, power=8, reflex=0, weapon_skill=0, shield_skill=0, speed_value=0, xp=150, death_function=monster_death)
-                ai_component = StationaryMonster()
+                fighter_component = Fighter(hp=40, defense=4, power=4, reflex=0, weapon_skill=0, 
+                                             shield_skill=0, move_probability=0, speed_value=0, xp=150, death_function=monster_death)
+                ai_component = BasicMonster()
                 
                 monster = Object(x, y, 'X', 'Melted one', libtcod.lighter_red,
 				                 blocks=True, fighter=fighter_component, ai=ai_component, monstype='stationary')
 
             elif choice == 'goblin':
                 #create goblin
-                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=1, shield_skill=0, speed_value=0, xp=200, death_function=monster_death)
+                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=1, 
+                                            shield_skill=0, move_probability=5, speed_value=0, xp=200, death_function=monster_death)
                 ai_component = BasicMonster()
 
                 monster = Object(x, y, 'g', 'goblin', libtcod.light_blue,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
 								 
-            elif choice == 'rat':
+            #elif choice == 'rat':
                 #create a rat
-                fighter_component = Fighter(hp=5, defense=0, power=1, reflex=1, weapon_skill=0, shield_skill=0, speed_value=0, xp=25, death_function=monster_death)
-                ai_component = BasicMonster()
+                #fighter_component = Fighter(hp=5, defense=0, power=1, reflex=1, weapon_skill=0, 
+                                             #shield_skill=0, speed_value=0, xp=25, death_function=monster_death)
+                #ai_component = BasicMonster()
             
-                monster = Object(x, y, 'r', 'rat', libtcod.light_grey,
-                                blocks=True, fighter=fighter_component, ai=ai_component)
+                #monster = Object(x, y, 'r', 'rat', libtcod.light_grey,
+                                #blocks=True, fighter=fighter_component, ai=ai_component)
 
-            elif choice == 'flayed one':
+            #elif choice == 'flayed one':
                 #create flayed one
-                fighter_component = Fighter(hp=40, defense=6, power=10, reflex=5, weapon_skill=0, shield_skill=0, speed_value=0, xp=160, death_function=monster_death)
-                ai_component = BasicMonster()
+                #fighter_component = Fighter(hp=40, defense=6, power=10, reflex=5, weapon_skill=0, 
+                                             #shield_skill=0, speed_value=0, xp=160, death_function=monster_death)
+                #ai_component = BasicMonster()
 
-                monster = Object(x, y, 'f', 'flayed one', libtcod.light_purple,
-                                 blocks=True, fighter=fighter_component, ai=ai_component)
+                #monster = Object(x, y, 'f', 'flayed one', libtcod.light_purple,
+                                 #blocks=True, fighter=fighter_component, ai=ai_component)
 
             elif choice == 'goblin archer':
                 #create goblin archer
-                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=0, shield_skill=0, speed_value=0, xp=200, death_function=monster_death)
+                fighter_component = Fighter(hp=10, defense=1, power=3, reflex=2, weapon_skill=0, 
+                                            shield_skill=0, move_probability=5, speed_value=0, xp=200, death_function=monster_death)
                 ai_component = RangedMonster()
 
                 monster = Object(x, y, 'g', 'goblin archer', libtcod.light_green,
                                  blocks=True, fighter=fighter_component, ai=ai_component)
+
+            elif choice == 'jackal':
+                #create Jackal
+                fighter_component = Fighter(hp=10, defense=1, power=2, reflex=2, weapon_skill=0,
+                                            shield_skill=0, move_probability=10, speed_value=0, xp=200, death_function=monster_death)
+                ai_component = FastMonster()
+
+                monster = Object(x, y, 'j', 'jackal', libtcod.pink,
+                                 blocks=True, fighter=fighter_component, ai=ai_component)
+            else:
+                print("Something's gone wrong, choice =", choice)
             objects.append(monster)
+            print(choice)
  
     #choose random number of items
     num_items = libtcod.random_get_int(0, 0, max_items)
@@ -1581,13 +1780,13 @@ def load_game():
 
 def warrior_class():
     global player
-    fighter_component = Fighter(hp=20, defense=2, power=2, reflex=2, weapon_skill=2, shield_skill=0, speed_value=0, xp=0, death_function=player_death)
+    fighter_component = Fighter(hp=20, defense=2, power=2, reflex=2, weapon_skill=2, shield_skill=0, move_probability=5, speed_value=0, xp=0, death_function=player_death)
     variables_component = Variables(strength_var=1, agility_var=1, alertness_var=1, weapon_skill_var=1, shield_skill_var=3)
     player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, variables=variables_component, chartype='warrior')
 
 def scholar_class():
     global player
-    fighter_component = Fighter(hp=10, defense=2, power=1, reflex=2, weapon_skill=1, shield_skill=0, speed_value=0, xp=0, death_function=player_death)
+    fighter_component = Fighter(hp=10, defense=2, power=1, reflex=2, weapon_skill=1, shield_skill=0, move_probability=5, speed_value=0, xp=0, death_function=player_death)
     variables_component = Variables(strength_var=0, agility_var=0, alertness_var=1, weapon_skill_var=1, shield_skill_var=1)
     player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component, variables=variables_component, chartype='scholar')
 
@@ -1619,7 +1818,7 @@ def new_game():
  
     #generate map (at this point it's not drawn to the screen)
     dungeon_level = 1
-    make_map()
+    make_bsp()
     initialize_fov()
  
     game_state = 'playing'
@@ -1658,7 +1857,7 @@ def next_level():
  
     dungeon_level += 1
     message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
-    make_map()  #create a fresh new level!
+    make_bsp()  #create a fresh new level!
     initialize_fov()
  
 def initialize_fov():
