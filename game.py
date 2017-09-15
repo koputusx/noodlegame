@@ -6,10 +6,11 @@
 import libtcodpy as libtcod
 import random
 import math
-import textwrap
+#import textwrap
 import shelve
 import sys
 from constants import *
+import log
  
 
  
@@ -49,9 +50,10 @@ class Rect:
 class Object:
     #this is a generic object: the player, a monster, an item, the stairs...
     #it's always represented by a character on screen.
-    def __init__(self, x, y, char, name, color, speed_value=0, blocks=False, always_visible=False, 
-                 fighter=None, ai=None, item=None, equipment=None, chartype=None, 
-                 monstype=None, variables=None):
+    def __init__(self, x, y, char, name, color, speed_value=0, blocks=False, 
+                 always_visible=False, interactable=None, fighter=None, 
+                 ai=None, item=None, equipment=None, chartype=None, 
+                 monstype=None, variables=None, melee=None, missile=None):
         self.x = x
         self.y = y
         self.char = char
@@ -60,6 +62,7 @@ class Object:
         self.speed_value = speed_value
         self.blocks = blocks
         self.always_visible = always_visible
+        self.interactable = interactable
         self.fighter = fighter
         self.ensure_ownership(fighter)
  
@@ -76,6 +79,10 @@ class Object:
         self.chartype = chartype
         self.monstype = monstype
         self.variables = variables
+        self.melee_weapon = melee
+        self.ensure_ownership(melee)
+        self.missile_weapon = missile
+        self.ensure_ownership(missile)
  
     def move(self, dx, dy):
         #move by the given amount, if the destination is not blocked
@@ -332,24 +339,24 @@ class Fighter(Component):
         if to_hit_roll > evasion_roll: #attack will hit
             if damage_roll > defense_roll:
                 #make the target take some damage
-                message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
+                log.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
                 target.fighter.take_damage(damage)
             else:
-                message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+                log.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
  
         elif to_hit_roll == evasion_roll: #attack has 50% chance of hitting
             if libtcod.random_get_int(0, 0, 1) == 1:
                 if damage_roll >  defense_roll:
                    #make the target take some damage
-                   message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
+                   log.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
                    target.fighter.take_damage(damage)
                 else:
-                   message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+                   log.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
             else:
-                  message(self.owner.name.capitalize() + ' missed!')
+                  log.message(self.owner.name.capitalize() + ' missed!')
  
         else: #attack misses
-            message(self.owner.name.capitalize() + ' missed!')
+            log.message(self.owner.name.capitalize() + ' missed!')
  
     def ranged_attack(self, target):
         #a formula for ranged attack damage
@@ -359,32 +366,32 @@ class Fighter(Component):
         if hit > 0: #attack will hit
             if damage > 0:
                 #make the target take some damage
-                message(self.owner.name.capitalize() + 's ' + ' arrow ' + ' hits ' + target.name + ' for ' + str(damage) + ' hit points.')
+                log.message(self.owner.name.capitalize() + 's ' + ' arrow ' + ' hits ' + target.name + ' for ' + str(damage) + ' hit points.')
                 target.fighter.take_damage(damage)
             else:
-                message(self.owner.name.capitalize() + 's ' + ' arrow ' + ' hits ' + target.name + ' but it has no effect!')
+                log.message(self.owner.name.capitalize() + 's ' + ' arrow ' + ' hits ' + target.name + ' but it has no effect!')
  
         elif hit == 0: #attack has 50% chance of hitting
             if libtcod.random_get_int(0, 0, 1) == 1:
                 if damage > 0:
                    #make the target take some damage
-                   message(self.owner.name.capitalize() + 's ' + 'arrow ' + ' hits ' + target.name + ' for ' + str(damage) + ' hit points.')
+                   log.message(self.owner.name.capitalize() + 's ' + 'arrow ' + ' hits ' + target.name + ' for ' + str(damage) + ' hit points.')
                    target.fighter.take_damage(damage)
                 else:
-                   message(self.owner.name.capitalize() + 's ' + ' arrow ' + ' hits ' + target.name + ' but it has no effect!')
+                   log.message(self.owner.name.capitalize() + 's ' + ' arrow ' + ' hits ' + target.name + ' but it has no effect!')
             else:
-                  message(self.owner.name.capitalize() + 's ' + ' arrow' + ' missed!')
+                  log.message(self.owner.name.capitalize() + 's ' + ' arrow' + ' missed!')
  
         elif hit < 0: #attack has 25% chance of hitting
             if libtcod.random_get_int(0, 1, 4) == 4:
                 if damage > 0:
                   #make the target take some damage
-                  message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
+                  log.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
                   target.fighter.take_damage(damage)
                 else:
-                  message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+                  log.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
             else:
-               message(self.owner.name.capitalize() + ' missed!')
+               log.message(self.owner.name.capitalize() + ' missed!')
  
     def take_damage(self, damage):
         #apply damage if possible
@@ -502,7 +509,7 @@ class ConfusedMonster:
  
         else:  #restore the previous AI (this one will be deleted because it's not referenced anymore)
             self.owner.ai = self.old_ai
-            message('The ' + self.owner.name + ' is no longer confused!', libtcod.red)
+            log.message('The ' + self.owner.name + ' is no longer confused!', libtcod.red)
 
 class ParalyzedMonster:
     #AI for a temporarily paralyzed monster(reverts to previous AI after while).
@@ -520,11 +527,11 @@ class ParalyzedMonster:
             print self.owner.fighter.reflex
             print self.owner.fighter.weapon_skill
             #monster is paralyzed and therefore can't do anything
-            message('The ' + self.owner.name + ' is paralyzed!', libtcod.yellow)
+            log.message('The ' + self.owner.name + ' is paralyzed!', libtcod.yellow)
             self.owner.fighter.reflex = 0
             print "after"
             self.owner.fighter.weapon_skill = 0
-            self.owner.fighter.move_probability
+            self.owner.fighter.move_probability = 0
             print self.num_turns
             print self.owner.fighter.reflex
             print self.owner.fighter.weapon_skill
@@ -535,7 +542,13 @@ class ParalyzedMonster:
             self.owner.reflex = self.old_reflex
             self.owner.weapon_skill = self.old_weapon_skill
             self.owner.move_probability = self.old_move_probability
-            message('The ' + self.owner.name + ' is no longer paralyzed!', libtcod.red)
+            log.message('The ' + self.owner.name + ' is no longer paralyzed!', libtcod.red)
+
+class Interactable(Component):
+    #object in the world that can be used (but not picked up)
+    def __init__(self, description=None, use_function=None):
+        self.description = description
+        self.use_function = use_function
 			
 class Item(Component):
     #an item that can be picked up and used.
@@ -552,7 +565,7 @@ class Item(Component):
                 #p.item.count += object.item.count
                 #actor.current_map.objects.remove(o)
                 #if report:
-                    #message(actor.name.capitalize() + ' picked up a ' + item.name + '!', libtcod.green)
+                    #log.message(actor.name.capitalize() + ' picked up a ' + item.name + '!', libtcod.green)
                 #return True
 
         #if len(actor.inventory) >= 26:
@@ -564,7 +577,7 @@ class Item(Component):
             #actor.inventory.append(object)
             #actor.current_map.objects.remove(object)
             #if report:
-                #message(actor.name.capitalize() + ' picked up a ' + object.name + '!', libtcod.green)
+                #log.message(actor.name.capitalize() + ' picked up a ' + object.name + '!', libtcod.green)
 
             # Special case: automatically equip if the corresponding equipment slot is unused.
             #equipment = object.equipment
@@ -575,11 +588,11 @@ class Item(Component):
     def pick_up(self):
         #add to the player's inventory and remove from the map
         if len(inventory) >= 26:
-            message('Your inventory is full, cannot pick up ' + self.owner.name + '.', libtcod.red)
+            log.message('Your inventory is full, cannot pick up ' + self.owner.name + '.', libtcod.red)
         else:
             inventory.append(self.owner)
             objects.remove(self.owner)
-            message('You picked up a ' + self.owner.name + '!', libtcod.green)
+            log.message('You picked up a ' + self.owner.name + '!', libtcod.green)
  
             #special case: automatically equip, if the corresponding equipment slot is unused
             equipment = self.owner.equipment
@@ -596,7 +609,7 @@ class Item(Component):
         inventory.remove(self.owner)
         self.owner.x = player.x
         self.owner.y = player.y
-        message('You dropped a ' + self.owner.name + '.', libtcod.yellow)
+        log.message('You dropped a ' + self.owner.name + '.', libtcod.yellow)
  
     def use(self):
         #special case: if the object has the Equipment component, the "use" action is to equip/dequip
@@ -606,7 +619,7 @@ class Item(Component):
  
         #just call the "use_function" if it is defined
         if self.use_function is None:
-            message('The ' + self.owner.name + ' cannot be used.')
+            log.message('The ' + self.owner.name + ' cannot be used.')
         else:
             if self.use_function() != 'cancelled':
                 inventory.remove(self.owner)  #destroy after use, unless it was cancelled for some reason
@@ -646,13 +659,13 @@ class Equipment(Component):
  
         #equip object and show a message about it
         self.is_equipped = True
-        message('Equipped ' + self.owner.name + ' on ' + self.slot + '.', libtcod.light_green)
+        log.message('Equipped ' + self.owner.name + ' on ' + self.slot + '.', libtcod.light_green)
  
     def dequip(self):
         #dequip object and show a message about it
         if not self.is_equipped: return
         self.is_equipped = False
-        message('Dequipped ' + self.owner.name + ' from ' + self.slot + '.', libtcod.light_yellow)
+        log.message('Dequipped ' + self.owner.name + ' from ' + self.slot + '.', libtcod.light_yellow)
 
     def set_owner(self, entity):
         Component.set_owner(self, entity)
@@ -661,6 +674,32 @@ class Equipment(Component):
         if entity.item is None:
             entity.item = Item()
             entity.item.set_owner(entity)
+
+class MeleeWeapon(Component):
+    def __init__(self, skill, damage, skill_bonus=0, on_strike=None):
+        self.skill = skill
+        self.damage = damage
+        self.skill_bonus = skill_bonus
+        self.on_strike = on_strike
+
+    def set_owner(self, entity):
+        Component.set_owner(self, entity)
+        if entity.equipment is None:
+            entity.equipment = Equipment('right hand')
+            entity.equipment.set_owner(entity)
+
+class MissileWeapon(Component):
+    def __init__(self, skill, damage, ammo, max_range=8):
+        self.skill = skill
+        self.damage = damage
+        self.ammo = ammo
+        self.max_range = max_range
+
+    def set_owner(self, entity):
+        Component.set_owner(self, entity)
+        if entity.equipment is None:
+            entity.equipment = Equipment('left hand')
+            entity.equipment.set_owner(entity)
 
 #    #monster abilities
 #   def __init__(self, doppelganger=0):
@@ -1375,9 +1414,10 @@ def render_all():
  
     #print the game messages, one line at a time
     y = 1
-    for (line, color) in game_msgs:
-        libtcod.console_set_default_foreground(panel, color)
-        libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT,line)
+    #print(log.game_messages)
+    for single_message in log.game_messages:
+        libtcod.console_set_default_foreground(panel, single_message.colour)
+        libtcod.console_print_ex(panel, MSG_X, y, libtcod.BKGND_NONE, libtcod.LEFT, single_message.message)
         y += 1
  
     #show the player's stats
@@ -1396,17 +1436,17 @@ def render_all():
     libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
  
  
-def message(new_msg, color = libtcod.white):
+#def message(new_msg, color = libtcod.white):
     #split the message if necessary, among multiple lines
-    new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
+    #new_msg_lines = textwrap.wrap(new_msg, MSG_WIDTH)
  
-    for line in new_msg_lines:
+    #for line in new_msg_lines:
         #if the buffer is full, remove the first line to make room for the new one
-        if len(game_msgs) == MSG_HEIGHT:
-            del game_msgs[0]
+        #if len(game_msgs) == MSG_HEIGHT:
+            #del game_msgs[0]
  
         #add the new line as a tuple, with the text and the color
-        game_msgs.append( (line, color) )
+        #game_msgs.append( (line, color) )
  
  
 def player_move_or_attack(dx, dy):
@@ -1586,7 +1626,7 @@ def check_level_up():
         # it is! level up and ask to raise some stats
         player.level += 1
         player.fighter.xp -= level_up_xp
-        message('Your battle skills grow stronger! You reached level ' + str(player.level) + '!', libtcod.yellow)
+        log.message('Your battle skills grow stronger! You reached level ' + str(player.level) + '!', libtcod.yellow)
  
         # don't need this any more: current_menu_item = 0 # we need to track the size of the menu
         m = []
@@ -1638,7 +1678,7 @@ def player_death(player):
     #the game ended!
     global game_state
     #message(EPITAPHS, libtcod.crimson)
-    message('You died!', libtcod.red)
+    log.message('You died!', libtcod.red)
     game_state = 'dead'
  
     #for added effect, transform the player into a corpse!
@@ -1648,7 +1688,7 @@ def player_death(player):
 def monster_death(monster):
     #transform it into a nasty corpse! it doesn't block, can't be
     #attacked and doesn't move
-    message('The ' + monster.name + ' is dead! You gain ' + str(monster.fighter.xp) + ' experience points.', libtcod.orange)
+    log.message('The ' + monster.name + ' is dead! You gain ' + str(monster.fighter.xp) + ' experience points.', libtcod.orange)
     monster.char = '%'
     monster.color = libtcod.dark_red
     monster.blocks = False
@@ -1706,48 +1746,48 @@ def closest_monster(max_range):
 def cast_heal():
     #heal the player
     if player.fighter.hp == player.fighter.max_hp:
-        message('You are already at full health!', libtcod.red)
+        log.message('You are already at full health!', libtcod.red)
         return 'cancelled'
  
-    message('Your wounds start to feel better!', libtcod.light_violet)
+    log.message('Your wounds start to feel better!', libtcod.light_violet)
     player.fighter.heal(HEAL_AMOUNT)
 
 def cast_greaterheal():
     #heal the player moar
     if player.fighter.hp == player.fighter.max_hp:
-        message('You are already at full health!', libtcod.red)
+        log.message('You are already at full health!', libtcod.red)
         return 'cancelled'
 
-    message('Your wounds start to feel much better!', libtcod.light_violet)
+    log.message('Your wounds start to feel much better!', libtcod.light_violet)
     player.fighter.heal(GREATHEAL_AMOUNT)
 	
 def cast_lightning():
     #find closest enemy (inside a maximum range) and damage it
     monster = closest_monster(LIGHTNING_RANGE)
     if monster is None:  #no enemy found within maximum range
-        message('No enemy is close enough to strike.', libtcod.red)
+        log.message('No enemy is close enough to strike.', libtcod.red)
         return 'cancelled'
  
     #zap it!
-    message('A lighting bolt strikes the ' + monster.name + ' with a loud thunder! The damage is '
+    log.message('A lighting bolt strikes the ' + monster.name + ' with a loud thunder! The damage is '
             + str(LIGHTNING_DAMAGE) + ' hit points.', libtcod.light_blue)
     monster.fighter.take_damage(LIGHTNING_DAMAGE)
  
 def cast_fireball():
     #ask the player for a target tile to throw a fireball at
-    message('Left-click a target tile for the fireball, or right-click to cancel.', libtcod.light_cyan)
+    log.message('Left-click a target tile for the fireball, or right-click to cancel.', libtcod.light_cyan)
     (x, y) = target_tile()
     if x is None: return 'cancelled'
-    message('The fireball explodes, burning everything within ' + str(FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
+    log.message('The fireball explodes, burning everything within ' + str(FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
  
     for obj in objects:  #damage every fighter in range, including the player
         if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
-            message('The ' + obj.name + ' gets burned for ' + str(FIREBALL_DAMAGE) + ' hit points.', libtcod.orange)
+            log.message('The ' + obj.name + ' gets burned for ' + str(FIREBALL_DAMAGE) + ' hit points.', libtcod.orange)
             obj.fighter.take_damage(FIREBALL_DAMAGE)
  
 def cast_confuse():
     #ask the player for a target to confuse
-    message('Left-click an enemy to confuse it, or right-click to cancel.', libtcod.light_cyan)
+    log.message('Left-click an enemy to confuse it, or right-click to cancel.', libtcod.light_cyan)
     monster = target_monster(CONFUSE_RANGE)
     print(monster)
     if monster is None: return 'cancelled'
@@ -1757,11 +1797,11 @@ def cast_confuse():
     old_ai = monster.ai
     monster.ai = ConfusedMonster(old_ai)
     monster.ai.owner = monster  #tell the new component who owns it
-    message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
+    log.message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
 
 def cast_paralyze():
     #ask player for target to confuse
-    message('Left-click on an enemy to paralyze it, or right-click to cancel it.', libtcod.light_cyan)
+    log.message('Left-click on an enemy to paralyze it, or right-click to cancel it.', libtcod.light_cyan)
     monster = target_monster(PARALYZE_RANGE)
     if monster is None: return 'cancelled'
 
@@ -1772,15 +1812,15 @@ def cast_paralyze():
     old_move_probability = monster.fighter.move_probability
     monster.ai = ParalyzedMonster(old_ai, old_reflex, old_weapon_skill, old_move_probability)
     monster.ai.owner = monster #tell the new component who owns it.
-    message('The ' + monster.name + ' suddenly falls to the ground, unable to do anything!', libtcod.light_green)
+    log.message('The ' + monster.name + ' suddenly falls to the ground, unable to do anything!', libtcod.light_green)
 	
 def cast_magicmissile():
     #for now ask a player for target to destroy
-    message('Double left-click an enemy to hurt it, or right-click to cancel.', libtcod.light_cyan)
+    log.message('Double left-click an enemy to hurt it, or right-click to cancel.', libtcod.light_cyan)
     monster = target_monster(MAGICMISSILE_RANGE)
     (x, y) = target_tile()
     if x is None: return 'cancelled'
-    message('The ' + monster.name + ' is hit by powerfull stream of energy for ' + str(MAGICMISSILE_DAMAGE) + ' hit points.', libtcod.pink) 
+    log.message('The ' + monster.name + ' is hit by powerfull stream of energy for ' + str(MAGICMISSILE_DAMAGE) + ' hit points.', libtcod.pink) 
     monster.fighter.take_damage(MAGICMISSILE_DAMAGE)
 
 #I'll put move_n code here for reference when I do the code for assassins rush spell    
@@ -1889,6 +1929,9 @@ def char_creation(): #player chooses their character class
 
 def new_game():
     global player, inventory, game_msgs, game_state, dungeon_level
+
+    #must initialize log before doing anything that might enit messages
+    log.init()
  
     #create object representing the player
     player
@@ -1904,19 +1947,19 @@ def new_game():
     inventory = []
  
     #create the list of game messages and their colors, starts empty
-    game_msgs = []
+    #game_msgs = []
  
     #a warm welcoming message!
-    message('Welcome stranger to the the eternal, twisted and slimy realm of noodles. Press h for help', libtcod.red)
+    log.message('Welcome stranger to the the eternal, twisted and slimy realm of noodles. Press h for help', libtcod.red)
  
     #initial equipment:
     if player.chartype == 'knight':
-        equipment_component = Equipment(slot='right hand', power_bonus=3)
+        #equipment_component = Equipment(slot='right hand', power_bonus=3)
         obj1 = Object(0, 0, '/', 'sword', libtcod.sky, 
                       item=Item('description'),
-                      equipment=equipment_component)
+                      melee=MeleeWeapon(skill='sword', damage=3))
         inventory.append(obj1)
-        equipment_component.equip()
+        #equipment_component.equip()
         obj1.always_visible = True
         equipment_component = Equipment(slot='left hand', defense_bonus=1)
         obj3 = Object(0, 0, '[', 'shield', libtcod.darker_orange,
@@ -1946,11 +1989,11 @@ def new_game():
 def next_level():
     #advance to the next level
     global dungeon_level
-    message('You take a moment to rest, and recover your strength.', libtcod.light_violet)
+    log.message('You take a moment to rest, and recover your strength.', libtcod.light_violet)
     player.fighter.heal(player.fighter.max_hp / 2)  #heal the player by 50%
  
     dungeon_level += 1
-    message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
+    log.message('After a rare moment of peace, you descend deeper into the heart of the dungeon...', libtcod.red)
     make_bsp()  #create a fresh new level!
     initialize_fov()
  
