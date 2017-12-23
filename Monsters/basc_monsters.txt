@@ -1,0 +1,52 @@
+MONSTERS
+
+{
+[name=orc]
+[char=o]
+[color=desaturated_green]
+[blocks]
+[fighter
+	<hp=10>
+	<def=0>
+	<pow=3>
+	<xp=35>
+	<death=basic_death>]
+[ai=BasicMonster]
+[placement
+	<0:80>]
+}
+
+{
+[name=troll]
+[char=T]
+[color=darker_green]
+[blocks]
+[fighter
+	<hp=16>
+	<def=1>
+	<pow=4>
+	<xp=100>
+	<death=basic_death>]
+[ai=BasicMonster]
+[placement
+	<3:15>
+	<5:30>
+	<7:60>]
+}
+
+{
+[name=firebat]
+[char=b]
+[color=darker_orange]
+[blocks]
+[fighter
+	<hp=5>
+	<def=0>
+	<pow=1>
+	<xp=10>
+	<death=explosive_death>]
+[ai=BasicMonster]
+[placement
+	<0:20>]
+[pack=3:5]
+}
