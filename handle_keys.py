@@ -45,7 +45,7 @@ def handle_keys():
         else:
             key_char = chr(settings.key.c)
 
-            if key_char == 'g':
+            if key_char == ',':
                 for object in settings.objects:
                     if object.x == settings.player.x and \
                        object.y == settings.player.y and object.item:
@@ -83,6 +83,10 @@ def handle_keys():
                 if settings.stairs.x == settings.player.x and \
                         settings.stairs.y == settings.player.y:
                     next_level()
+                    
+            if key_char == 'P':
+                libtcod.sys_save_screenshot()
+                message('screenshot taken!')
 
             return 'didnt-take-turn'
 

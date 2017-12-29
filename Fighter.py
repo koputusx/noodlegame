@@ -1,5 +1,5 @@
 import settings
-
+import message
 
 class Fighter:
     def __init__(self, hp, defense, power, xp, death_function=None):
@@ -32,12 +32,12 @@ class Fighter:
         damage = self.power - target.fighter.defense
 
         if damage > 0:
-            print(self.owner.name.capitalize() + ' attacks ' +
-                  target.name + ' for ' + str(damage) + ' hit points.')
+            message.message(self.owner.name.capitalize() + ' attacks ' +
+                            target.name + ' for ' + str(damage) + ' hit points.')
             target.fighter.take_damage(damage)
         else:
-            print(self.owner.name.capitalize() + ' attacks ' +
-                  target.name + ' but it has no effect.')
+            message.message(self.owner.name.capitalize() + ' attacks ' +
+                            target.name + ' but it has no effect.')
 
     def take_damage(self, damage):
         if damage > 0:

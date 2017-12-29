@@ -5,8 +5,7 @@ from place_objects import place_objects
 from GameObject import GameObject
 from Tile import Tile
 from Rect import Rect
-import sys
-#import libtcodpy as libtcod
+
 
 def make_map(corner=0):
     settings.objects = [settings.player]
@@ -25,21 +24,21 @@ def make_map(corner=0):
     h = settings.RNG.get_int(settings.ROOM_MIN_SIZE,
                              settings.ROOM_MAX_SIZE)
     if corner == 0:   # North West
-        x = settings.RNG.get_int(0, (settings.MAP_WIDTH - w - 1) / 3)
-        y = settings.RNG.get_int(0, (settings.MAP_HEIGHT - h - 1) / 3)
+        x = settings.RNG.get_int(0, (settings.MAP_WIDTH - w - 2) / 3)
+        y = settings.RNG.get_int(0, (settings.MAP_HEIGHT - h - 2) / 3)
     elif corner == 1:   # North East
         x = settings.RNG.get_int(settings.MAP_WIDTH / 3,
-                                 settings.MAP_WIDTH - w - 1)
-        y = settings.RNG.get_int(0, (settings.MAP_HEIGHT - h - 1) / 3)
+                                 settings.MAP_WIDTH - w - 2)
+        y = settings.RNG.get_int(0, (settings.MAP_HEIGHT - h - 2) / 3)
     elif corner == 2:   # South West
-        x = settings.RNG.get_int(0, (settings.MAP_WIDTH - w - 1) / 3)
+        x = settings.RNG.get_int(0, (settings.MAP_WIDTH - w - 2) / 3)
         y = settings.RNG.get_int(settings.MAP_HEIGHT / 3,
-                                 settings.MAP_HEIGHT - h - 1)
+                                 settings.MAP_HEIGHT - h - 2)
     elif corner == 3:   # South East
         x = settings.RNG.get_int(settings.MAP_WIDTH / 3,
-                                 settings.MAP_WIDTH - w - 1)
+                                 settings.MAP_WIDTH - w - 2)
         y = settings.RNG.get_int(settings.MAP_HEIGHT / 3,
-                                 settings.MAP_HEIGHT - h - 1)
+                                 settings.MAP_HEIGHT - h - 2)
 
     new_room = Rect(x, y, w, h)
     create_room(new_room)
@@ -115,14 +114,7 @@ def make_map(corner=0):
                              color.white, always_visible=True)
     settings.objects.append(settings.stairs)
     settings.stairs.send_to_back()
-    for y in range(0, settings.MAP_HEIGHT):
-        for x in range(0, settings.MAP_WIDTH):
-            if settings.map[x][y].blocked:
-                sys.stdout.write("B")
-            else:
-                sys.stdout.write(".")
-        print
-    return map, GameObject, settings.stairs
+
 
 def create_room(room):
     for x in range(room.x1 + 1, room.x2):

@@ -34,9 +34,9 @@ ROOM_MIN_SIZE = 4
 MAX_ROOMS = 60
 
 #constants for bsp
-#DEPTH = 5
-#MIN_SIZE = 10
-#FULL_ROOMS = False
+DEPTH = 5
+MIN_SIZE = 10
+FULL_ROOMS = False
 
 #for hp regeneration
 #HP_REGEN_TIME = 100
@@ -67,7 +67,7 @@ TORCH_RADIUS = 15
 LIMIT_FPS = 20  #20 frames-per-second maximum
 
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
-panel = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 
 dungeon_level = 1
 fov_map = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
@@ -93,4 +93,5 @@ def init():
                                     libtcod.FONT_LAYOUT_ASCII_INROW)
     libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT,
                               'basicroguelike', False)
+    libtcod.console_credits()
     libtcod.sys_set_fps(LIMIT_FPS)

@@ -9,7 +9,7 @@ from GameObject import GameObject
 
 
 def new_game():
-    fighter_component = Fighter(hp=30, defense=2, power=5,
+    fighter_component = Fighter(hp=100, defense=100, power=100,
                                 xp=0, death_function=player_death)
     settings.player = GameObject(0, 0, '@', 'player', color.white, blocks=True,
                              fighter=fighter_component)
@@ -22,8 +22,8 @@ def new_game():
     settings.inventory = []
     settings.game_msgs = []
 
-    message('Welcome stranger. Prepare to perish in the ' +
-            'Tombs of the Ancient Kings.', color.red)
+    message('Welcome stranger to the the eternal,' 
+            'twisted and slimy realm of noodles. ', color.red)
     equipment_component = Equipment(slot='right hand', power_bonus=2)
     obj = GameObject(0, 0, '-', 'dagger', color.sky,
                  equipment=equipment_component)

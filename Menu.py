@@ -36,8 +36,8 @@ def menu(header, options, width):
     libtcod.console_flush()
     key = libtcod.console_wait_for_keypress(True)
     
-    if key.vk == libtcod.KEY_ENTER and key.alt:
-        libtcod.console_set_fullscreen(not libtcod.console_is_fulldcreen())
+    if key.vk == libtcod.KEY_ENTER and key.lalt:
+        libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
         
     index = key.c - ord('a')
     if index >= 0 and index < len(options):

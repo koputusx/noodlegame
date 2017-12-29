@@ -18,7 +18,7 @@ class Item:
             message.message('You picked up a ' + self.owner.name + '.',
                             color.green)
 
-            equipment = self.equipment
+            equipment = self.owner.equipment
             if equipment and get_equipped_in_slot(equipment.slot) is None:
                 equipment.equip()
 

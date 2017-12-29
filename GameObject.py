@@ -42,14 +42,48 @@ class GameObject:
             self.y += dy
     
     def move_towards(self, target_x, target_y):
+        #dx = target_x - self.x
+        #dy = target_y - self.y
+        #distance = math.sqrt(dx ** 2 + dy ** 2)
+        
+        #dx = int(round(dx / distance))
+        #dy = int(round(dy / distance))
+        #self.move(dx, dy)
+        #vector from this object to the target, and distance
         dx = target_x - self.x
         dy = target_y - self.y
-        distance = math.sqrt(dx ** 2 + dy ** 2)
-        
-        dx = int(round(dx / distance))
-        dy = int(round(dy / distance))
-        self.move(dx, dy)
-    
+ 
+        mx = 0
+        my = 0
+
+        #get the direction of the vector
+        #print(target_x, self.x, mx, target_y, self.y, my)
+        if dx > 0:
+            mx = 1
+        elif dx < 0:
+            mx = -1
+        if dy > 0:
+            my = 1
+        elif dy < 0:
+            my = -1
+ 
+        #try diagonal first
+        if not is_blocked(self.x + mx, self.y + my):
+            self.x += mx
+            self.y += my
+        else:
+            if abs(dx) > abs(dy):
+                if not is_blocked(self.x + mx, self.y):
+                    self.x += mx
+                elif not is_blocked(self.x, self.y+my):
+                    self.y += my
+            else:
+                if not is_blocked(self.x, self.y+my):
+                    self.y += my
+                elif not is_blocked(self.x + mx, self.y):
+                    self.x += mx    
+
+
     def distance_to(self, other):
         dx = other.x - self.x
         dy = other.y - self.y
