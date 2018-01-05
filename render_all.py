@@ -13,6 +13,7 @@ def render_all():
         libtcod.map_compute_fov(settings.fov_map, settings.player.x,
                                 settings.player.y, settings.TORCH_RADIUS,
                                 settings.FOV_LIGHT_WALLS, settings.FOV_ALGO)
+        libtcod.console_clear(settings.con)
         for y in range(settings.CAMERA_HEIGHT):
             for x in range(settings.CAMERA_WIDTH):
                 (map_x, map_y) = (settings.camera_x + x, settings.camera_y + y)
@@ -120,10 +121,10 @@ def move_camera(target_x, target_y, camera_x, camera_y, MAP_WIDTH, MAP_HEIGHT, C
     if x > MAP_WIDTH - CAMERA_WIDTH : x = MAP_WIDTH - CAMERA_WIDTH
     if y > MAP_HEIGHT - CAMERA_HEIGHT : y = MAP_HEIGHT - CAMERA_HEIGHT
  
-    if x != camera_x or y != camera_y: fov_recompute = True
+    if x != camera_x or y != camera_y: settings.fov_recompute = True
  
     #(camera_x, camera_y) = (x, y)
-    return (camera_x, camera_y, fov_recompute)
+    return (x, y, settings.fov_recompute)
  
 def to_camera_coordinates(x, y, camera_x, camera_y, CAMERA_WIDTH, CAMERA_HEIGHT):
     #convert coordinates on the map to coordinates on the screen

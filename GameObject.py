@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 import settings
 import color
 import math
+import render_all
 from Item import Item
 
 class GameObject:
@@ -97,16 +98,18 @@ class GameObject:
         settings.objects.insert(0, self)
     
     def draw(self):
+        (x, y) = render_all.to_camera_coordinates(self.x, self.y, settings.camera_x, settings.camera_y, settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
         if (libtcod.map_is_in_fov(settings.fov_map, self.x, self.y) or
                 (self.always_visible and
                     settings.map[self.x][self.y].explored)):
             libtcod.console_set_default_foreground(settings.con, self.color)
-            libtcod.console_put_char(settings.con, self.x, self.y, self.char,
+            libtcod.console_put_char(settings.con, x, y, self.char,
                                      libtcod.BKGND_NONE)
     
     def clear(self):
+        (x, y) = render_all.to_camera_coordinates(self.x, self.y, settings.camera_x, settings.camera_y, settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
         if libtcod.map_is_in_fov(settings.fov_map, self.x, self.y):
-            libtcod.console_put_char_ex(settings.con, self.x, self.y,
+            libtcod.console_put_char_ex(settings.con, x, y,
                                         '.', color.white,
                                         color.light_ground)
 
