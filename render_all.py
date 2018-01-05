@@ -4,9 +4,10 @@ import color
 
 
 def render_all():
-    camera_x, camera_y, fov_recompute = move_camera(settings.player.x, settings.player.y, settings.camera_x, settings.camera_y, 
-                                                    settings.MAP_WIDTH, settings.MAP_HEIGHT, 
-                                                    settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
+    settings.camera_x, settings.camera_y, settings.fov_recompute = move_camera(settings.player.x, settings.player.y, settings.camera_x, settings.camera_y, 
+                                                                               settings.MAP_WIDTH, settings.MAP_HEIGHT, 
+                                                                               settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
+    print settings.camera_x, settings.camera_y, settings.fov_recompute
     if settings.fov_recompute:
         settings.fov_recompute = False
         libtcod.map_compute_fov(settings.fov_map, settings.player.x,
