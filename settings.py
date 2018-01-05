@@ -81,6 +81,7 @@ map = [[Tile(True) for y in range(MAP_HEIGHT)]
 flood_map = [[-1 for y in range(MAP_HEIGHT)]
              for x in range(MAP_WIDTH)]
 mouse = libtcod.Mouse
+(camera_x, camera_y) = (0, 0)
 objects =[]
 player = GameObject(0, 0, '@', 'player', color.white)
 stairs = GameObject(0, 0, '<', 'stairs', color.white)

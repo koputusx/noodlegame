@@ -4,15 +4,17 @@ import color
 
 
 def render_all():
-    move_camera(player.x, player.y, settings.MAP_WIDTH, settings.MAP_HEIGHT, settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
+    camera_x, camera_y, fov_recompute = move_camera(settings.player.x, settings.player.y, settings.camera_x, settings.camera_y, 
+                                                    settings.MAP_WIDTH, settings.MAP_HEIGHT, 
+                                                    settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
     if settings.fov_recompute:
         settings.fov_recompute = False
         libtcod.map_compute_fov(settings.fov_map, settings.player.x,
                                 settings.player.y, settings.TORCH_RADIUS,
                                 settings.FOV_LIGHT_WALLS, settings.FOV_ALGO)
-        for y in range(settings.MAP_HEIGHT):
-            for x in range(settings.MAP_WIDTH):
-                (map_x, map_y) = (camera_x + x, camera_y + y)
+        for y in range(settings.CAMERA_HEIGHT):
+            for x in range(settings.CAMERA_WIDTH):
+                (map_x, map_y) = (settings.camera_x + x, settings.camera_y + y)
                 visible = libtcod.map_is_in_fov(settings.fov_map, map_x, map_y)
                 wall = settings.map[map_x][map_y].block_sight
                 if not visible:
@@ -98,35 +100,35 @@ def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):
 
 def get_name_under_mouse():
     (x, y) = (settings.mouse.cx, settings.mouse.cy)
-    (x, y) = (camera_x + x, camera_y + y)
+    (x, y) = (settings.camera_x + x, settings.camera_y + y)
     names = [obj.name for obj in settings.objects if obj.x == x and
              obj.y == y and libtcod.map_is_in_fov(settings.fov_map,
                                                   obj.x, obj.y)]
     names = ', '.join(names)
     return names.capitalize()
 
-def move_camera(target_x, target_y, settings.MAP_WIDTH, settings.MAP_HEIGHT, settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT):
+def move_camera(target_x, target_y, camera_x, camera_y, MAP_WIDTH, MAP_HEIGHT, CAMERA_WIDTH, CAMERA_HEIGHT):
  
     #new camera coordinates (top-left corner of the screen relative to the map)
-    x = target_x - settings.CAMERA_WIDTH / 2  #coordinates so that the target is at the center of the screen
-    y = target_y - settings.CAMERA_HEIGHT / 2
+    x = target_x - CAMERA_WIDTH / 2  #coordinates so that the target is at the center of the screen
+    y = target_y - CAMERA_HEIGHT / 2
  
     #make sure the camera doesn't see outside the map
     if x < 0: x = 0
     if y < 0: y = 0
-    if x > settings.MAP_WIDTH - settings.CAMERA_WIDTH : x = settings.MAP_WIDTH - settings.CAMERA_WIDTH
-    if y > settings.MAP_HEIGHT - settings.CAMERA_HEIGHT : y = settings.MAP_HEIGHT - settings.CAMERA_HEIGHT
+    if x > MAP_WIDTH - CAMERA_WIDTH : x = MAP_WIDTH - CAMERA_WIDTH
+    if y > MAP_HEIGHT - CAMERA_HEIGHT : y = MAP_HEIGHT - CAMERA_HEIGHT
  
     if x != camera_x or y != camera_y: fov_recompute = True
  
-   (camera_x, camera_y) = (x, y)
-   return (camera_x, camera_y)
+    #(camera_x, camera_y) = (x, y)
+    return (camera_x, camera_y, fov_recompute)
  
-def to_camera_coordinates(x, y, camera_x, camera_y, settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT):
+def to_camera_coordinates(x, y, camera_x, camera_y, CAMERA_WIDTH, CAMERA_HEIGHT):
     #convert coordinates on the map to coordinates on the screen
     (x, y) = (x - camera_x, y - camera_y)
  
-    if (x < 0 or y < 0 or x >= settings.CAMERA_WIDTH or y >= settings.CAMERA_HEIGHT):
+    if (x < 0 or y < 0 or x >= CAMERA_WIDTH or y >= CAMERA_HEIGHT):
             return (None, None)  #if it's outside the view, return nothing
  
     return (x, y)
