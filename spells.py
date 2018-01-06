@@ -55,6 +55,22 @@ def cast_confuse():
             ' look vacant, as he starts to stumble around.',
             color.light_green)
 
+#def cast_paralyze():
+    #ask player for target to paralyze
+    #from AI import ParalyzedMonster
+    #message('Left-click on an enemy to paralyze it, or right-click to cancel it.', color.light_cyan)
+    #monster = targeting.target_monster(settings.PARALYZE_RANGE)
+    #if monster is None: return 'cancelled'
+
+    #replace the monster's AI with paralyzed one
+    #old_ai = monster.ai
+    #old_reflex = monster.fighter.reflex
+    #old_weapon_skill = monster.fighter.weapon_skill
+    #old_move_probability = monster.fighter.move_probability
+    #monster.ai = ParalyzedMonster(old_ai, old_reflex, old_weapon_skill, old_move_probability)
+    #monster.ai.owner = monster #tell the new component who owns it.
+    #log.message('The ' + monster.name + ' suddenly falls to the ground, unable to do anything!', libtcod.light_green)
+
 
 def cast_self_destruct(self):
     x = self.owner.x

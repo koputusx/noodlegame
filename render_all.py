@@ -4,7 +4,8 @@ import color
 
 
 def render_all():
-    settings.camera_x, settings.camera_y, settings.fov_recompute = move_camera(settings.player.x, settings.player.y, settings.camera_x, settings.camera_y, 
+    settings.camera_x, settings.camera_y, settings.fov_recompute = move_camera(settings.player.x, settings.player.y, 
+                                                                               settings.camera_x, settings.camera_y, 
                                                                                settings.MAP_WIDTH, settings.MAP_HEIGHT, 
                                                                                settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
     print settings.camera_x, settings.camera_y, settings.fov_recompute
@@ -24,21 +25,21 @@ def render_all():
                         if wall:
                             libtcod.console_put_char_ex(settings.con,
                                                         x, y, '#',
-                                                        color.white,
+                                                        color.dark_gray,
                                                         color.dark_wall)
                         else:
                             libtcod.console_put_char_ex(settings.con,
                                                         x, y, '.',
-                                                        color.white,
+                                                        color.dark_gray,
                                                         color.dark_ground)
                 else:
                     if wall:
                         libtcod.console_put_char_ex(settings.con, x, y, '#',
-                                                    color.white,
+                                                    color.light_gray,
                                                     color.light_wall)
                     else:
                         libtcod.console_put_char_ex(settings.con, x, y, '.',
-                                                    color.white,
+                                                    color.light_gray,
                                                     color.light_ground)
                     settings.map[map_x][map_y].explored = True
 

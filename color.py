@@ -54,3 +54,5 @@ light_cyan = libtcod.light_cyan
 # spells~cast_confuse targeting message
 desaturated_green = libtcod.desaturated_green
 # place_objects orc
+dark_gray = libtcod.dark_gray
+#for tiles outside your FOV

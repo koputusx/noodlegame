@@ -4,6 +4,7 @@ import color
 
 
 def menu(header, options, width):
+
     if len(options) > 26:
         raise ValueError('Cannot have a menu with more than 26 options')
 
@@ -33,13 +34,32 @@ def menu(header, options, width):
     y = settings.SCREEN_HEIGHT / 2 - height / 2
     libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
     
-    libtcod.console_flush()
-    key = libtcod.console_wait_for_keypress(True)
+    #compute x and y offsets to convert console position to menu position
+    x_offset = x #x is the left edge of the menu
+    y_offset = y + header_height #subtract the height of the header from the top edge of the menu
     
-    if key.vk == libtcod.KEY_ENTER and key.lalt:
-        libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
+    while True:
+        #present the root console to the player and check for input
+        libtcod.console_flush()
+        libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, settings.key, settings.mouse)
         
-    index = key.c - ord('a')
-    if index >= 0 and index < len(options):
-        return index
-    return None
+        if (mouse.lbutton_pressed):
+            (menu_x, menu_y) = (mouse.cx - x_offset, mouse.cy - y_offset)
+            #check if click is within the menu and on a choice
+            if menu_x >= 0 and menu_x < width and menu_y >= 0 and menu_y < height - header_height:
+                return menu_y
+            
+            if mouse.rbutton_pressed or key.vk == libtcod.KEY_ESCAPE:
+                return None #cancel if the player right-clicked or pressed Escape
+            
+            if key.vk == libtcod.KEY_ENTER and key.lalt:
+                #alt+enrter toggles fullscreen
+                libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
+            
+            #convert the ASCII code to an index: if it corresponds to an option, return it
+            index = key.c - ord('a')
+            if index >= 0 and index < len(options):
+                return index
+            #if they pressed a leter that is not an option, return None
+            if index >= 0 and index <= 26:
+                return None
