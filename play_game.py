@@ -50,7 +50,7 @@ def check_level_up():
                           ['Constitution (+20 HP, from ' +
                            str(settings.player.fighter.max_hp) + ')',
                            'Strength (+1 attack, from ' +
-                           str(settings.player.fighter.power) + ')',
+                           str(settings.player.fighter.strength) + ')',
                            'Agility (+1 defense, from ' +
                            str(settings.player.fighter.defense) + ')'],
                           settings.LEVEL_SCREEN_WIDTH)
@@ -59,6 +59,6 @@ def check_level_up():
             settings.player.fighter.max_hp += 20
             settings.player.fighter.hp += 20
         elif choice == 1:
-            settings.player.fighter.power += 1
+            settings.player.fighter.strength += 1
         elif choice == 2:
             settings.player.fighter.defense += 1

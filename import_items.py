@@ -87,21 +87,24 @@ def make_item(parts):
 
 def make_equipment(pieces):
     _slot = 'Test'
-    _power_bonus = 0
+    _strength_bonus = 0
     _defense_bonus = 0
+    _reflex_bonus = 0
     _max_hp_bonus = 0
     for p in pieces:
         if p.startswith('slot'):
             _slot = p.split('=', 1)[1]
-        elif p.startswith('power_bonus'):
+        elif p.startswith('strength_bonus'):
             _power_bonus = p.split('=', 1)[1]
         elif p.startswith('defense_bonus'):
             _defense_bonus = p.split('=', 1)[1]
+        elif p.startswith('reflex_bonus'):
+            _reflex_bonus = p.split('=', 1)[1]
         elif p.startswith('max_hp_bonus'):
             _max_hp_bonus = p.split('=', 1)[1]
 
-    return Equipment(_slot, power_bonus=int(_power_bonus),
-                     defense_bonus=int(_defense_bonus),
+    return Equipment(_slot, strength_bonus=int(_strength_bonus),
+                     defense_bonus=int(_defense_bonus), reflex_bonus=int(_reflex_bonus),
                      max_hp_bonus=int(_max_hp_bonus))
 
 

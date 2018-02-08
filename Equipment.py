@@ -4,9 +4,10 @@ import message
 
 
 class Equipment:
-    def __init__(self, slot, power_bonus=0, defense_bonus=0, max_hp_bonus=0):
-        self.power_bonus = power_bonus
+    def __init__(self, slot, strength_bonus=0, defense_bonus=0, reflex_bonus=0, max_hp_bonus=0):
+        self.strength_bonus = strength_bonus
         self.defense_bonus = defense_bonus
+        self.reflex_bonus = reflex_bonus
         self.max_hp_bonus = max_hp_bonus
         self.slot = slot
         self.is_equipped = False

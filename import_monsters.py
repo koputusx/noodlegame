@@ -46,6 +46,7 @@ def make_monster(parts):
     name = 'default'
     char = '@'
     colour = 'white'
+    _speed = 0
     blocking = False
     fighter_component = None
     ai_component = None
@@ -57,6 +58,8 @@ def make_monster(parts):
             char = p[-1:]
         elif p.startswith('color'):
             colour = p.split('=', 1)[1]
+        elif p.startswith('speed'):
+            _speed = p.split('=', 1)[1]
         elif p == 'blocks':
             blocking = True
         elif p.startswith('fighter'):
@@ -86,7 +89,7 @@ def make_monster(parts):
 
             placement_range_component = make_placement_range(pieces)
 
-    return GameObject(0, 0, char, name, getattr(color, colour),
+    return GameObject(0, 0, char, name, getattr(color, colour), speed_value=int(_speed),
                   blocks=blocking, fighter=fighter_component,
                   ai=AI_type[ai_component](),
                   placement_range=placement_range_component)
@@ -95,23 +98,43 @@ def make_monster(parts):
 def make_fighter(pieces):
     _hp = 0
     _defense = 0
-    _power = 0
+    _strength = 0
+    _reflex = 0
+    _regen_rate = 0
+    _regen_amount = 0
+    _movesSinceLastHit = 0
+    _move_probability = 0
     _xp = 0
+    _wound_counter = 0
     death_component = 'basic_death'
     for p in pieces:
         if p.startswith('hp'):
             _hp = p.split('=', 1)[1]
         elif p.startswith('def'):
             _defense = p.split('=', 1)[1]
-        elif p.startswith('pow'):
-            _power = p.split('=', 1)[1]
+        elif p.startswith('str'):
+            _strength = p.split('=', 1)[1]
+        elif p.startswith('ref'):
+            _reflex = p.split('=', 1)[1]
+        elif p.startswith('regr'):
+            _regen_rate = p.split('=', 1)[1]
+        elif p.startswith('rega'):
+            _regen_amount = p.split('=', 1)[1]
+        elif p.startswith('mslh'):
+            _movesSinceLastHit = p.split('=', 1)[1]
+        elif p.startswith('mprb'):
+            _move_probability = p.split('=', 1)[1]
         elif p.startswith('xp'):
             _xp = p.split('=', 1)[1]
+        elif p.startswith('wcount'):
+            _wound_counter = p.split('=', 1)[1]
         elif p.startswith('death'):
             death_component = p.split('=', 1)[1]
 
     return Fighter(hp=int(_hp), defense=int(_defense),
-                   power=int(_power), xp=int(_xp),
+                   strength=int(_strength), reflex=int(_reflex), regen_rate=int(_regen_rate),
+                   regen_amount=int(_regen_amount), movesSinceLastHit=int(_movesSinceLastHit),
+                   xp=int(_xp), wound_counter=int(_wound_counter), move_probability=int(_move_probability),
                    death_function=Death_type[death_component])
 
 

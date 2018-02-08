@@ -6,9 +6,9 @@ ITEMS
 [color=sky]
 [equipment
 	<slot=right hand>
-	<power_bonus=3>
+	<strength_bonus=3>]
 [placement
-	<4:5>]
+	<1:5>]
 }
 
 {
@@ -16,8 +16,8 @@ ITEMS
 [char=\[]
 [color=darker_orange]
 [equipment
-	<slot=right hand>
+	<slot=left hand>
 	<defense_bonus=3>]
 [placement
-	<8:15>]
+	<1:15>]
 }

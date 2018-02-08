@@ -51,9 +51,11 @@ def render_all():
     libtcod.console_blit(settings.con, 0, 0, settings.SCREEN_WIDTH,
                          settings.SCREEN_HEIGHT, 0, 0, 0)
 
+    #prepare to render the GUI panel
     libtcod.console_set_default_background(settings.panel, color.black)
     libtcod.console_clear(settings.panel)
 
+    #print the game messages, one line at a time
     y = 1
     for (line, msgcolor) in settings.game_msgs:
         libtcod.console_set_default_foreground(settings.panel, msgcolor)
@@ -62,12 +64,13 @@ def render_all():
                                  libtcod.LEFT, line)
         y += 1
 
+    #show player stats
     render_bar(1, 1, settings.BAR_WIDTH, 'HP', settings.player.fighter.hp,
                settings.player.fighter.max_hp, color.light_red,
                color.darker_red)
-    libtcod.console_print_ex(settings.panel, 1, 3, libtcod.BKGND_NONE,
-                             libtcod.LEFT, 'Dungeon level ' +
-                             str(settings.dungeon_level))
+    libtcod.console_print_ex(settings.panel, 1, 3, libtcod.BKGND_NONE, libtcod.LEFT, 'Dungeon level ' + str(settings.dungeon_level) +
+                             '\nAttack ' + str(settings.player.fighter.strength) + '\nDefense ' + str(settings.player.fighter.defense) +
+                             '\nmovesSinceLastHit ' + str(settings.player.fighter.movesSinceLastHit))
 
     libtcod.console_set_default_foreground(settings.con, color.white)
     libtcod.console_print_ex(0, 1, settings.SCREEN_HEIGHT - 2,

@@ -8,7 +8,10 @@ class BasicMonster:
         monster = self.owner
         if libtcod.map_is_in_fov(settings.fov_map, monster.x, monster.y):
             if monster.distance_to(settings.player) >= 2:
-                monster.move_towards(settings.player.x, settings.player.y)
+                monster.move_towards_n(settings.player)
 
-            elif settings.player.fighter.hp > 0:
+            elif monster.distance_to(settings.player) < 2 and settings.player.fighter.hp > 0: 
                 monster.fighter.attack(settings.player)
+
+#so I don't forget this
+#class NormalMonster(BasicMonster):

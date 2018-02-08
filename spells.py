@@ -69,7 +69,7 @@ def cast_confuse():
     #old_move_probability = monster.fighter.move_probability
     #monster.ai = ParalyzedMonster(old_ai, old_reflex, old_weapon_skill, old_move_probability)
     #monster.ai.owner = monster #tell the new component who owns it.
-    #log.message('The ' + monster.name + ' suddenly falls to the ground, unable to do anything!', libtcod.light_green)
+    #message('The ' + monster.name + ' suddenly falls to the ground, unable to do anything!', libtcod.light_green)
 
 
 def cast_self_destruct(self):

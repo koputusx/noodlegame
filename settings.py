@@ -39,7 +39,7 @@ MIN_SIZE = 10
 FULL_ROOMS = False
 
 #for hp regeneration
-#HP_REGEN_TIME = 100
+HP_REGEN_TIME = 100
  
 #spell values
 HEAL_AMOUNT = 40
@@ -93,6 +93,6 @@ def init():
                                     libtcod.FONT_TYPE_GREYSCALE |
                                     libtcod.FONT_LAYOUT_ASCII_INROW)
     libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT,
-                              'basicroguelike', False)
+                              'Noodle game', False)
     libtcod.console_credits()
     libtcod.sys_set_fps(LIMIT_FPS)

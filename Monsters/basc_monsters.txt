@@ -4,12 +4,19 @@ MONSTERS
 [name=orc]
 [char=o]
 [color=desaturated_green]
+[speed=1]
 [blocks]
 [fighter
-	<hp=10>
-	<def=0>
-	<pow=3>
+	<hp=15>
+	<def=4>
+	<str=5>
+    <ref=3>
+    <regr=1>
+    <rega=1>
+    <mslh=0>
+    <mprb=10>
 	<xp=35>
+    <wcount=0>
 	<death=basic_death>]
 [ai=BasicMonster]
 [placement
@@ -20,12 +27,19 @@ MONSTERS
 [name=troll]
 [char=T]
 [color=darker_green]
+[speed=1]
 [blocks]
 [fighter
 	<hp=16>
 	<def=1>
-	<pow=4>
+	<str=4>
+    <ref=3>
+    <regr=1>
+    <rega=1>
+    <mslh=0>
+    <mprb=10>
 	<xp=100>
+    <wcount=0>
 	<death=basic_death>]
 [ai=BasicMonster]
 [placement
@@ -38,12 +52,19 @@ MONSTERS
 [name=firebat]
 [char=b]
 [color=darker_orange]
+[speed=2]
 [blocks]
 [fighter
 	<hp=5>
 	<def=0>
-	<pow=1>
+	<str=1>
+    <ref=3>
+    <regr=1>
+    <rega=1>
+    <mslh=0>
+    <mprb=10>
 	<xp=10>
+    <wcount=0>
 	<death=explosive_death>]
 [ai=BasicMonster]
 [placement

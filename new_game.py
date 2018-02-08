@@ -9,10 +9,10 @@ from GameObject import GameObject
 
 
 def new_game():
-    fighter_component = Fighter(hp=100, defense=100, power=100,
-                                xp=0, death_function=player_death)
+    fighter_component = Fighter(hp=100, defense=5, strength=5, reflex=5, regen_rate=1, regen_amount=1, movesSinceLastHit=0,
+                                xp=0, wound_counter=0, death_function=player_death)
     settings.player = GameObject(0, 0, '@', 'player', color.white, blocks=True,
-                             fighter=fighter_component)
+                                 fighter=fighter_component)
 
     settings.player.level = 1
     settings.dungeon_level = 1
@@ -24,7 +24,7 @@ def new_game():
 
     message('Welcome stranger to the the eternal,' 
             'twisted and slimy realm of noodles. ', color.red)
-    equipment_component = Equipment(slot='right hand', power_bonus=2)
+    equipment_component = Equipment(slot='right hand', strength_bonus=2)
     obj = GameObject(0, 0, '-', 'dagger', color.sky,
                  equipment=equipment_component)
     settings.inventory.append(obj)
