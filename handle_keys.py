@@ -2,7 +2,7 @@ import libtcodpy as libtcod
 import settings
 import color
 from map_gen import make_map
-from message import message
+import message
 from Rect import Rect
 from Menu import menu
 
@@ -75,7 +75,7 @@ def handle_keys():
                        '\nExperiance: ' + str(settings.player.fighter.xp) +
                        '\nExperiance to level up: ' + str(level_up_xp) +
                        '\nMaximum HP: ' + str(settings.player.fighter.max_hp) +
-                       '\nAttack: ' + str(settings.player.fighter.power) +
+                       '\nStrength: ' + str(settings.player.fighter.strength) +
                        '\nDefense: ' + str(settings.player.fighter.defense),
                        settings.CHARACTER_SCREEN_WIDTH)
 
@@ -92,12 +92,12 @@ def handle_keys():
 
 
 def next_level():
-    message('You take a moment to rest, and recover your strength',
+    message.message('You take a moment to rest, and recover your strength',
             color.light_violet)
     settings.player.fighter.heal(settings.player.fighter.max_hp / 2)
 
     settings.dungeon_level += 1
-    message('After a rare moment of peace, you descend deeper into ' +
+    message.message('After a rare moment of peace, you descend deeper into ' +
             'the heart of the dungeon...', color.red)
     (cx, cy) = Rect(0, 0, settings.MAP_WIDTH, settings.MAP_HEIGHT).center
     if settings.stairs.x < cx:
@@ -162,3 +162,60 @@ def inventory_menu(header):
     if index is None or len(settings.inventory) == 0:
         return None
     return settings.inventory[index].item
+
+def _colored_text_list(lines, width):
+    """
+    Display *lines* of (text, color) in a window of size *width*.
+    Scroll through them if the mouse wheel is spun or the arrows are pressed.
+    """
+    length = len(lines)
+    height = min(length, 40)
+    window = libtcod.console_new(width, height)
+    offset = -height
+
+    while True:
+        if offset > -height:
+            offset = -height
+        if offset < -length:
+            offset = -length
+
+        libtcod.console_clear(window)
+        renderer.write_log(lines[offset:length + offset + height],
+                           window, 0, 0)
+
+        x = config.SCREEN_WIDTH/2 - width/2
+        y = config.SCREEN_HEIGHT/2 - height/2
+        libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
+
+        libtcod.console_flush()
+        while True:
+            (key, mouse) = (settings.key, settings.mouse)
+            (key_pressed, direction, shift) = player_move_or_attack()
+            if key_pressed:
+                if direction == player_move_or_attack(0, -1) and not shift:
+                    offset -= 1
+                    break
+                elif direction == player_move_or_attack(0, 1) and not shift:
+                    offset += 1
+                    break
+                elif (direction == player_move_or_attack(1, -1) or
+                        (direction == player_move_or_attack(0, -1) and shift)):
+                    offset -= height
+                    break
+                elif (direction == player_move_or_attack(1, 1) or
+                        (direction == player_move_or_attack(0, 1) and shift)):
+                    offset += height
+                    break
+            elif (key.vk == libtcod.KEY_ALT or
+                  key.vk == libtcod.KEY_CONTROL or
+                  key.vk == libtcod.KEY_SHIFT or
+                  key.vk == libtcod.KEY_NONE):
+                break
+            return
+
+
+def log_display(width=60):
+    """
+    Display the recent log history, wait for any keypress.
+    """
+    _colored_text_list(message.game_msgs, width)

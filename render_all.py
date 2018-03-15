@@ -1,26 +1,30 @@
 import libtcodpy as libtcod
 import settings
 import color
-
+import message
 
 def render_all():
     settings.camera_x, settings.camera_y, settings.fov_recompute = move_camera(settings.player.x, settings.player.y, 
                                                                                settings.camera_x, settings.camera_y, 
                                                                                settings.MAP_WIDTH, settings.MAP_HEIGHT, 
                                                                                settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
-    print settings.camera_x, settings.camera_y, settings.fov_recompute
+    #print settings.camera_x, settings.camera_y, settings.fov_recompute
     if settings.fov_recompute:
+        #recompute FOV if needed
         settings.fov_recompute = False
         libtcod.map_compute_fov(settings.fov_map, settings.player.x,
                                 settings.player.y, settings.TORCH_RADIUS,
                                 settings.FOV_LIGHT_WALLS, settings.FOV_ALGO)
         libtcod.console_clear(settings.con)
+
+        #go through all tiles, and set their background color according to the FOV
         for y in range(settings.CAMERA_HEIGHT):
             for x in range(settings.CAMERA_WIDTH):
                 (map_x, map_y) = (settings.camera_x + x, settings.camera_y + y)
                 visible = libtcod.map_is_in_fov(settings.fov_map, map_x, map_y)
                 wall = settings.map[map_x][map_y].block_sight
                 if not visible:
+                    #if it's not visible right now, player can only see after it's explored
                     if settings.map[map_x][map_y].explored:
                         if wall:
                             libtcod.console_put_char_ex(settings.con,
@@ -43,6 +47,8 @@ def render_all():
                                                     color.light_ground)
                     settings.map[map_x][map_y].explored = True
 
+    #draw all objects in the  list, except player. We want it to
+    #always appear over all other objects, so it is drawn later.
     for object in settings.objects:
         if object != settings.player:
             object.draw()
@@ -57,11 +63,12 @@ def render_all():
 
     #print the game messages, one line at a time
     y = 1
-    for (line, msgcolor) in settings.game_msgs:
-        libtcod.console_set_default_foreground(settings.panel, msgcolor)
+    #print(message.game_msgs)
+    for single_message in message.game_msgs:
+        libtcod.console_set_default_foreground(settings.panel, single_message.color)
         libtcod.console_print_ex(settings.panel, settings.MSG_X,
                                  y, libtcod.BKGND_NONE,
-                                 libtcod.LEFT, line)
+                                 libtcod.LEFT, single_message.message)
         y += 1
 
     #show player stats
@@ -78,12 +85,19 @@ def render_all():
                              str(settings.player.fighter.hp) +
                              '/' + str(settings.player.fighter.max_hp))
 
+    #display names of objects under the mouse
     libtcod.console_set_default_foreground(settings.panel, color.light_gray)
     libtcod.console_print_ex(settings.panel, 1, 0, libtcod.BKGND_NONE,
                              libtcod.LEFT, get_name_under_mouse())
 
+    #blit the contents of "panel" to the root console
     libtcod.console_blit(settings.panel, 0, 0, settings.SCREEN_WIDTH,
                          settings.PANEL_HEIGHT, 0, 0, settings.PANEL_Y)
+    
+    #draw overlay
+    libtcod.console_set_key_color(settings.overlay, color.black)
+    libtcod.console_blit(settings.overlay, 0, 0, settings.SCREEN_WIDTH,
+                         settings.SCREEN_HEIGHT, 0, 0, 0, 0.4, 1.0)
 
 
 def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color):

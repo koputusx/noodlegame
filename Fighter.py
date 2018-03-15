@@ -3,8 +3,9 @@ import libtcodpy as libtcod
 import settings
 import message
 import random
+from component import *
 
-class Fighter:
+class Fighter(Component):
     def __init__(self, hp, defense, strength, reflex, regen_rate, regen_amount,
                  movesSinceLastHit, xp, wound_counter, move_probability=0, death_function=None, skills={}):
         self.base_max_hp = hp

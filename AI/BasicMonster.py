@@ -1,8 +1,8 @@
 import libtcodpy as libtcod
 import settings
+from component import *
 
-
-class BasicMonster:
+class BasicMonster(Component):
 
     def take_turn(self):
         monster = self.owner

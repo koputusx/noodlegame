@@ -4,7 +4,7 @@ import color
 from handle_keys import handle_keys
 from render_all import render_all
 from save_game import save_game
-from message import message
+import message
 from Menu import menu
 
 
@@ -28,8 +28,7 @@ def play_game():
             save_game()
             break
 
-        if settings.game_state == 'playing' and \
-           settings.player_action != 'didnt-take-turn':
+        if settings.game_state == 'playing' and settings.player_action != 'didnt-take-turn':
             for object in settings.objects:
                 if object.ai:
                     object.ai.take_turn()
@@ -41,8 +40,8 @@ def check_level_up():
     if settings.player.fighter.xp >= level_up_xp:
         settings.player.level += 1
         settings.player.fighter.xp -= level_up_xp
-        message('Your battle skills grow stronger. You reached level ' +
-                str(settings.player.level) + '.', color.yellow)
+        message.message('Your battle skills grow stronger. You reached level ' +
+                        str(settings.player.level) + '.', color.yellow)
 
         choice = None
         while choice is None:

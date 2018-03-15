@@ -2,6 +2,7 @@ import spells
 import color
 import glob
 from Equipment import Equipment
+#from Equipment import MeleeWeapon
 from GameObject import GameObject
 from Item import Item
 

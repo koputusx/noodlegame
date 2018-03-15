@@ -1,7 +1,7 @@
 import handle_keys
 import settings
 import shelve
-
+import message
 
 def load_game():
     file = shelve.open('savegame.save', 'r')
@@ -9,7 +9,7 @@ def load_game():
     settings.objects = file['objects']
     settings.player = settings.objects[file['player_index']]
     settings.inventory = file['inventory']
-    settings.game_msgs = file['game_msgs']
+    message.game_msgs = file['game_msgs']
     settings.game_state = file['game_state']
     settings.stairs = settings.objects[file['stairs_index']]
     settings.dungeon_level = file['dungeon_level']

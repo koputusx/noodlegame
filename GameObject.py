@@ -5,12 +5,13 @@ import math
 import render_all
 from Item import Item
 
+
 class GameObject:
     def __init__(self, x, y, char, name, color, speed_value=0,
                  blocks=False, always_visible=False, interactable=None,
                  fighter=None, ai=None, item=None, equipment=None, 
                  chartype=None, monstype=None, variables=None, 
-                 melee=None, missile=None, placement_range=None):
+                 melee_weapon=None, missile_weapon=None, placement_range=None):
         self.x = x
         self.y = y
         self.char = char
@@ -19,31 +20,31 @@ class GameObject:
         self.speed_value = speed_value
         self.blocks = blocks
         self.always_visible = always_visible
+
         self.interactable = interactable
+        self.ensure_ownership(interactable)
+
         self.fighter = fighter
-        if self.fighter:
-            self.fighter.owner = self
-        
+        self.ensure_ownership(fighter)
+
         self.ai = ai
-        if self.ai:
-            self.ai.owner = self
+        self.ensure_ownership(ai)
         
         self.item = item
-        if self.item:
-            self.item.owner = self
+        self.ensure_ownership(item)
         
         self.equipment = equipment
-        if self.equipment:
-            self.equipment.owner = self
-            
-            self.item = Item()
-            self.item.owner = self
+        self.ensure_ownership(equipment)
         
         self.chartype = chartype
         self.monstype = monstype
         self.variables = variables
-        self.melee_weapon = melee
-        self.missile_weapon = missile
+
+        self.melee_weapon = melee_weapon
+        self.ensure_ownership(melee_weapon)
+
+        self.missile_weapon = missile_weapon
+        self.ensure_ownership(missile_weapon)
         
         self.placement_range = placement_range
     
@@ -94,6 +95,45 @@ class GameObject:
                 elif not is_blocked(self.x + mx, self.y):
                     self.x += mx
 
+    def move_away(self, target_x, target_y):
+        #vector from this object to the target, and distance
+
+        dx = target_x - self.x
+        dy = target_y - self.y
+        dx = -dx
+        dy = -dy
+
+        mx = 0
+        my = 0
+
+        #get the direction of the vector
+        print(target_x, self.x, mx, target_y, self.y, my)
+        if dx > 0:
+            mx = 1
+        elif dx < 0:
+            mx = -1
+        if dy > 0:
+            my = 1
+        elif dy < 0:
+            my = -1
+ 
+        #try diagonal first
+        if not is_blocked(self.x + mx, self.y + my):
+            self.x += mx
+            self.y += my
+        else:
+            if abs(dx) > abs(dy):
+                if not is_blocked(self.x + mx, self.y):
+                    self.x += mx
+                elif not is_blocked(self.x, self.y+my):
+                    self.y += my
+            else:
+                if not is_blocked(self.x, self.y+my):
+                    self.y += my
+                elif not is_blocked(self.x + mx, self.y):
+                    self.x += mx
+
+
     def move_astar(self, target):
         #Create a FOV map that has the dimensions of the map
         fov = libtcod.map_new(settings.MAP_WIDTH, settings.MAP_HEIGHT)
@@ -143,6 +183,10 @@ class GameObject:
             if self.distance_to(target) > 1.5: #1.5 because of diagonals
                 self.move_astar(target)
 
+    def ensure_ownership(self, component):
+        if (component):
+            component.set_owner(self)
+
 
     def distance_to(self, other):
         dx = other.x - self.x
@@ -185,3 +229,4 @@ def is_blocked(x, y):
             return True
     
     return False
+

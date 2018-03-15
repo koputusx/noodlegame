@@ -26,7 +26,7 @@ MSG_HEIGHT = PANEL_HEIGHT - 1
 INVENTORY_WIDTH = 50
 CHARACTER_SCREEN_WIDTH = 30
 LEVEL_SCREEN_WIDTH = 40
-#MSG_LIMIT = 150
+MSG_LIMIT = 150
  
 #parameters for dungeon generator
 ROOM_MAX_SIZE = 20
@@ -66,13 +66,16 @@ TORCH_RADIUS = 15
  
 LIMIT_FPS = 20  #20 frames-per-second maximum
 
+#main console window for drawing the map and object
 con = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+#buffer overlaid over the main console window for effects, labels and other such stuff
+overlay = libtcod.console_new(SCREEN_WIDTH, SCREEN_HEIGHT)
+#UI text data
 panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 
 dungeon_level = 1
 fov_map = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
 fov_recompute = True
-game_msgs = []
 game_state = 'start_up'
 inventory = []
 key = libtcod.Key()

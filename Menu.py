@@ -75,3 +75,13 @@ def menu(header, options, width):
     if index >= 0 and index < len(options):
         return index
     return None
+
+def menu_item_add(menu,text):
+    menu.append(text)
+    return len(menu)-1
+    
+def optional_menu_item_add(menu,text,test):
+    if (test):
+        return menu_item_add(menu,text)
+    else:
+        return -1

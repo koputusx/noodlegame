@@ -4,6 +4,7 @@ import color
 from load_game import load_game
 from play_game import play_game
 from new_game import new_game
+#from character_creation import char_creation
 from Menu import menu
 settings.init()
 
@@ -28,6 +29,7 @@ if __name__ == '__main__':
                            'Continue last game', 'Quit'], 24)
 
         if choice == 0:
+            #char_creation()
             new_game()
             play_game()
         if choice == 1:
