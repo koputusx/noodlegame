@@ -35,7 +35,7 @@ def message(new_msg, color=color.white):
 
     for line in new_msg_lines:
         #if the buffer is full remove first line to make room for more
-        if len(game_msgs) == settings.MSG_LIMIT:
+        if len(game_msgs) == settings.MSG_HEIGHT:
             del game_msgs[0]
         new_message = ExplicitMessage(line, color, 1)
         if game_msgs and game_msgs[-1].can_merge(new_message):

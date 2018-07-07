@@ -35,3 +35,12 @@ ITEMS
 [placement
 	<2:10>]
 }
+
+{
+[name=scroll of acid ball]
+[char=#]
+[color=light_green]
+[use=cast_acidball]
+[placement
+        <0:35>]
+}

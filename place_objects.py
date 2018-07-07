@@ -1,5 +1,6 @@
 import settings
 import GameObject
+import actions
 import copy
 from import_monsters import monsters, packs
 from import_items import items
@@ -25,7 +26,7 @@ def place_objects(rect):
         x = settings.RNG.get_int(rect.x1 + 1, rect.x2 - 1)
         y = settings.RNG.get_int(rect.y1 + 1, rect.y2 - 1)
 
-        if not GameObject.is_blocked(x, y):
+        if not actions.is_blocked(x, y):
             choice = random_choice(monster_chances)
             monster = copy.deepcopy(monsters[choice])
             monster.x = x
@@ -40,7 +41,7 @@ def place_objects(rect):
         x = settings.RNG.get_int(rect.x1 + 1, rect.x2 - 1)
         y = settings.RNG.get_int(rect.y1 + 1, rect.y2 - 1)
 
-        if not GameObject.is_blocked(x, y):
+        if not actions.is_blocked(x, y):
             choice = random_choice(item_chances)
             item = copy.deepcopy(items[choice])
             item.x = x
@@ -59,7 +60,7 @@ def place_pack(monster):
     while monsters_to_place > 0:
         x = cur_x + settings.RNG.get_int(-1, 1)
         y = cur_y + settings.RNG.get_int(-1, 1)
-        if not GameObject.is_blocked(x, y):
+        if not actions.is_blocked(x, y):
             packmonster = copy.deepcopy(monster)
             packmonster.x = x
             packmonster.y = y

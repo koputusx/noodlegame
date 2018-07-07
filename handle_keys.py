@@ -5,7 +5,7 @@ from map_gen import make_map
 import message
 from Rect import Rect
 from Menu import menu
-
+import actions
 
 def handle_keys():
     if settings.key.vk == libtcod.KEY_ENTER and settings.key.lalt:
@@ -70,8 +70,9 @@ def handle_keys():
                 level_up_xp = settings.LEVEL_UP_BASE + \
                     settings.player.level * \
                     settings.LEVEL_UP_FACTOR
-                msgbox('Character information\n\nLevel: ' +
-                       str(settings.player.level) +
+                msgbox('Character information\n\nName: ' +
+                       str(settings.player.name) +
+                       '\nLevel: ' + str(settings.player.level) +
                        '\nExperiance: ' + str(settings.player.fighter.xp) +
                        '\nExperiance to level up: ' + str(level_up_xp) +
                        '\nMaximum HP: ' + str(settings.player.fighter.max_hp) +
@@ -138,7 +139,7 @@ def player_move_or_attack(dx, dy):
     if target is not None:
         settings.player.fighter.attack(target)
     else:
-        settings.player.move(dx, dy)
+        actions.move(settings.player, dx, dy)
         settings.fov_recompute = True
 
 
@@ -219,3 +220,14 @@ def log_display(width=60):
     Display the recent log history, wait for any keypress.
     """
     _colored_text_list(message.game_msgs, width)
+
+def write_log(messages, window, x, initial_y):
+    y = initial_y
+    for m in messages:
+        libtcod.console_set_default_foreground(window, m.color)
+        line = m.message
+        if m.count > 1:
+            line += ' (x' + str(m.count) + ')'
+        libtcod.console_print_ex(window, x, y, libtcod.BKGND_NONE,
+                                 libtcod.LEFT, line)
+        y += 1

@@ -14,14 +14,14 @@ class Item(Component):
         #returns true if other can stack with self
         return other.item and other.name == self.owner.name
 
-    def pick_up(self):
+    def pick_up(self, report=True):
         for p in settings.inventory:
             if self.can_combine(p):
                 p.item.count += self.count
                 print(p.item.count)
                 #settings.objects.remove(self.owner)
-                #message.message('You picked up a ' + self.owner.name + '.',
-                                #color.green)
+                message.message('You picked up a ' + self.owner.name + '.',
+                                color.green)
         if len(settings.inventory) >= 26:
             message.message('Your inventory is full, you cannot pick up ' +
                             self.owner.name + '.', color.red)
@@ -39,6 +39,9 @@ class Item(Component):
                 #melee_weapon.equip()
 
     def drop(self):
+        #remove the object from actor inventory and add it to the map 
+        #at players coordinates
+        #if it is equipment, dequip before dropping
         must_split = False
         if object.item.count > 1:
             object.item.count -= 1

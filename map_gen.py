@@ -115,13 +115,13 @@ def make_map(corner=0):
                              color.white, always_visible=True)
     settings.objects.append(settings.stairs)
     settings.stairs.send_to_back()
-    for y in range(0, settings.MAP_HEIGHT):
-        for x in range(0, settings.MAP_WIDTH):
-            if settings.map[x][y].blocked:
-                sys.stdout.write("B")
-            else:
-                sys.stdout.write(".")
-        print
+    #for y in range(0, settings.MAP_HEIGHT):
+        #for x in range(0, settings.MAP_WIDTH):
+            #if settings.map[x][y].blocked:
+                #sys.stdout.write("B")
+            #else:
+                #sys.stdout.write(".")
+        #print
     return map, GameObject, settings.stairs
 
 def create_room(room):

@@ -39,6 +39,41 @@ def cast_fireball():
                     ' hit points.', color.orange)
             obj.fighter.take_damage(settings.FIREBALL_DAMAGE)
 
+def cast_acidball():
+    message('Huge acid globe expands from your hand, ebgulfing everything within ' +
+            str(settings.ACIDBALL_RADIUS) + ' tiles.', color.orange)
+    
+    for obj in settings.objects:
+        if obj.distance_to(settings.player) <= settings.ACIDBALL_RADIUS and obj.fighter and obj.fighter != settings.player:
+            message('The ' + obj.name + ' is burned by acid for ' +
+                    str(settings.ACIDBALL_DAMAGE) +
+                    ' hit points.', color.orange)
+            obj.fighter.take_damage(settings.ACIDBALL_DAMAGE)
+
+
+#def cast_frostbolt():
+    ##this casts frostbolt, that damages everything on line between player and target tile
+    #message('Left-click for target tile for the frostbolt, or right click to cancel.', color.light_cyan)
+    #(x, y) targeting.target_tile()
+    #if x is None:
+        #return 'cancelled'
+    #message('You cast the frostbolt, damaging everyone in range', color.orange)
+    
+    #for obj in settings.objects:
+        #if obj.distance(x, y) <= settings.FROSTBOLT_RANGE and obj.fighter:
+            #message()
+            #obj.fighter.take_damage(settings.FROSTBOLT_DAMAGE)
+
+def cast_magicmissile():
+    #for now ask a player for target to destroy
+    MAGICMISSILE_DAMAGE = settings.player.level ** settings.player.level
+    message('Double left-click an enemy to hurt it, or right-click to cancel.', libtcod.light_cyan)
+    monster = target_monster(MAGICMISSILE_RANGE)
+    (x, y) = target_tile()
+    if x is None: return 'cancelled'
+    message('The ' + monster.name + ' is hit by powerfull stream of energy for ' + str(MAGICMISSILE_DAMAGE) + ' hit points.', libtcod.pink) 
+    monster.fighter.take_damage(MAGICMISSILE_DAMAGE)
+
 def cast_confuse():
     from AI import ConfusedMonster
     monster = targeting.closest_monster(settings.CONFUSE_RANGE)

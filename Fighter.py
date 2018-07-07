@@ -45,6 +45,10 @@ class Fighter(Component):
         bonus = sum(equipment.max_hp_bonus for
                     equipment in get_all_equipped(self.owner))
         return self.base_max_hp + bonus
+    
+    @property
+    def movesSinceLastHit(self):
+        return self.movesSinceLastHit
 
     def attack(self, target):
         #a formula for attack damage

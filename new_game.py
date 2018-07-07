@@ -40,6 +40,9 @@ def new_game():
     obj.always_visible = True
 
 def give_name():
+    #settings.game_state = 'naming
+    #player_name_string = ''
+    #settings.player.name = player_name_string
     player_name = raw_input('enter name: ')
     settings.player.name = player_name
 

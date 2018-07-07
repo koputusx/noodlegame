@@ -96,7 +96,7 @@ def make_equipment(pieces):
         if p.startswith('slot'):
             _slot = p.split('=', 1)[1]
         elif p.startswith('strength_bonus'):
-            _power_bonus = p.split('=', 1)[1]
+            _strength_bonus = p.split('=', 1)[1]
         elif p.startswith('defense_bonus'):
             _defense_bonus = p.split('=', 1)[1]
         elif p.startswith('reflex_bonus'):
