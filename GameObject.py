@@ -1,3 +1,4 @@
+from builtins import object
 import libtcodpy as libtcod
 import settings
 import color
@@ -5,11 +6,11 @@ import math
 import render_all
 from Item import Item
 
-
-class GameObject:
+#why is (object) added?
+class GameObject(object):
     def __init__(self, x, y, char, name, color, speed_value=0,
                  blocks=False, always_visible=False, interactable=None,
-                 fighter=None, ai=None, item=None, equipment=None, 
+                 fighter=None, ai=None, item=None, equipment=None, #inventory=None,
                  chartype=None, monstype=None, variables=None, 
                  melee_weapon=None, missile_weapon=None, placement_range=None):
         self.x = x
@@ -35,6 +36,9 @@ class GameObject:
         
         self.equipment = equipment
         self.ensure_ownership(equipment)
+
+        #self.inventory = inventory
+        #self.ensure_ownership(inventory)
         
         self.chartype = chartype
         self.monstype = monstype
@@ -81,19 +85,25 @@ class GameObject:
     
     def draw(self):
         (x, y) = render_all.to_camera_coordinates(self.x, self.y, 
-                                                  settings.camera_x, settings.camera_y, 
-                                                  settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
+                                                  settings.camera_x, 
+                                                  settings.camera_y, 
+                                                  settings.CAMERA_WIDTH, 
+                                                  settings.CAMERA_HEIGHT)
         if (libtcod.map_is_in_fov(settings.fov_map, self.x, self.y) or
                 (self.always_visible and
-                    settings.map[self.x][self.y].explored)):
+                    settings.map[self.x][self.y].explored) and
+                (x is not None and y is not None)):
             libtcod.console_set_default_foreground(settings.con, self.color)
             libtcod.console_put_char(settings.con, x, y, self.char,
                                      libtcod.BKGND_NONE)
+
     
     def clear(self):
         (x, y) = render_all.to_camera_coordinates(self.x, self.y, 
-                                                  settings.camera_x, settings.camera_y, 
-                                                  settings.CAMERA_WIDTH, settings.CAMERA_HEIGHT)
+                                                  settings.camera_x, 
+                                                  settings.camera_y, 
+                                                  settings.CAMERA_WIDTH, 
+                                                  settings.CAMERA_HEIGHT)
         if libtcod.map_is_in_fov(settings.fov_map, self.x, self.y):
             libtcod.console_put_char_ex(settings.con, x, y,
                                         '.', color.light_gray,

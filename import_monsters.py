@@ -1,3 +1,4 @@
+from __future__ import print_function
 import color
 import glob
 from Deaths import Death_type
@@ -102,8 +103,9 @@ def make_fighter(pieces):
     _reflex = 0
     _regen_rate = 0
     _regen_amount = 0
-    _movesSinceLastHit = 0
+    #_movesSinceLastHit = 0
     _move_probability = 0
+    _attack_number = 0
     _xp = 0
     _wound_counter = 0
     death_component = 'basic_death'
@@ -120,10 +122,12 @@ def make_fighter(pieces):
             _regen_rate = p.split('=', 1)[1]
         elif p.startswith('rega'):
             _regen_amount = p.split('=', 1)[1]
-        elif p.startswith('mslh'):
-            _movesSinceLastHit = p.split('=', 1)[1]
+        #elif p.startswith('mslh'):
+            #_movesSinceLastHit = p.split('=', 1)[1]
         elif p.startswith('mprb'):
             _move_probability = p.split('=', 1)[1]
+        elif p.startswith('an'):
+            _attack_number = p.split('=', 1)[1]
         elif p.startswith('xp'):
             _xp = p.split('=', 1)[1]
         elif p.startswith('wcount'):
@@ -133,9 +137,9 @@ def make_fighter(pieces):
 
     return Fighter(hp=int(_hp), defense=int(_defense),
                    strength=int(_strength), reflex=int(_reflex), regen_rate=int(_regen_rate),
-                   regen_amount=int(_regen_amount), movesSinceLastHit=int(_movesSinceLastHit),
+                   regen_amount=int(_regen_amount), #movesSinceLastHit=int(_movesSinceLastHit),
                    xp=int(_xp), wound_counter=int(_wound_counter), move_probability=int(_move_probability),
-                   death_function=Death_type[death_component])
+                   attack_number=int(_attack_number), death_function=Death_type[death_component])
 
 
 def make_placement_range(pieces):

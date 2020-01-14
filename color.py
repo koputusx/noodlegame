@@ -56,3 +56,5 @@ desaturated_green = libtcod.desaturated_green
 # place_objects orc
 dark_gray = libtcod.dark_gray
 #for tiles outside your FOV
+pink = libtcod.pink
+#for test creature

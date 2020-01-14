@@ -1,3 +1,9 @@
+from __future__ import print_function
+from __future__ import division
+from builtins import chr
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import libtcodpy as libtcod
 import settings
 import color
@@ -6,6 +12,27 @@ import message
 from Rect import Rect
 from Menu import menu
 import actions
+
+def try_pick_up(player):
+    for object in settings.objects:
+        if object.x == settings.player.x and object.y == settings.player.y and object.item:
+            return actions.pick_up(settings.player, object)
+    return False
+
+def try_drop(player):
+    chosen_item = inventory_menu(player, 'press a key next to an ite to drop it.\n')
+    if chosen_item is not None:
+        actions.drop(player, chosen_item.owner)
+        return True
+    return False
+
+def try_use(player):
+    chosen_item = inventory_menu(player, 'press letter next to item to' + 
+                                 'use it, or any other to cancel.\n')
+    if chosen_item is not None:
+        actions.use(player, chosen_item.owner)
+        return True
+    return False
 
 def handle_keys():
     if settings.key.vk == libtcod.KEY_ENTER and settings.key.lalt:
@@ -46,25 +73,16 @@ def handle_keys():
             key_char = chr(settings.key.c)
 
             if key_char == ',':
-                for object in settings.objects:
-                    if object.x == settings.player.x and \
-                       object.y == settings.player.y and object.item:
-                        object.item.pick_up()
-                        break
+                try_pick_up(settings.player)
+                print(settings.player.inventory)
 
             if key_char == 'i':
-                chosen_item = inventory_menu('Press the key next to an ' +
-                                             'item to use it, or any ' +
-                                             'other to cancel.\n')
-                if chosen_item is not None:
-                    chosen_item.use()
+                try_use(settings.player)
+                print(settings.player.inventory)
 
             if key_char == 'd':
-                chosen_item = inventory_menu('Press the key next to an ' +
-                                             'to drop it, or any ' +
-                                             'other to cancel.\n')
-                if chosen_item is not None:
-                    chosen_item.drop()
+                try_drop(settings.player)
+                print(settings.player.inventory)
 
             if key_char == 'c':
                 level_up_xp = settings.LEVEL_UP_BASE + \
@@ -91,11 +109,77 @@ def handle_keys():
 
             return 'didnt-take-turn'
 
+    # if settings.game_state == 'naming':
+        # key_char = chr(settings.key.c)
+        # player_name = []
+        # if key_char == 'a':
+            # player_name.append('a')
+            # print('a')
+        # elif key_char == 'b':
+            # player_name.append('b')
+        # elif key_char == 'c':
+            # player_name.append('c')
+        # elif key_char == 'd':
+            # player_name.append('d')
+        # elif key_char == 'e':
+            # player_name.append('e')
+        # elif key_char == 'f':
+            # player_name.append('f')
+        # elif key_char == 'g':
+            # player_name.append('g')
+        # elif key_char == 'h':
+            # player_name.append('h')
+        # elif key_char == 'i':
+            # player_name.append('i')
+        # elif key_char == 'j':
+            # player_name.append('j')
+        # elif key_char == 'k':
+            # player_name.append('k')
+        # elif key_char == 'l':
+            # player_name.append('l')
+        # elif key_char == 'm':
+            # player_name.append('m')
+        # elif key_char == 'n':
+            # player_name.append('n')
+        # elif key_char == 'o':
+            # player_name.append('o')
+        # elif key_char == 'p':
+            # player_name.append('p')
+        # elif key_char == 'q':
+            # player_name.append('q')
+        # elif key_char == 'r':
+            # player_name.append('r')
+        # elif key_char == 's':
+            # player_name.append('s')
+        # elif key_char == 't':
+            # player_name.append('t')
+        # elif key_char == 'u':
+            # player_name.append('u')
+        # elif key_char == 'v':
+            # player_name.append('v')
+        # elif key_char == 'w':
+            # player_name.append('w')
+        # elif key_char == 'x':
+            # player_name.append('x')
+        # elif key_char == 'y':
+            # player_name.append('y')
+        # elif key_char == 'z':
+            # player_name.append('z')
+        # #elif key_char == '':
+            # #name.append('')
+        # #elif key_char == '':
+            # #name.append('')
+        # #elif key_char == '':
+            # #name.append('')
+        # elif settings.key.vk == libtcod.KEY_ENTER:
+            # player_name = ''.join(player_name)
+        # return player_name
+
 
 def next_level():
     message.message('You take a moment to rest, and recover your strength',
             color.light_violet)
-    settings.player.fighter.heal(settings.player.fighter.max_hp / 2)
+    settings.player.fighter.heal(old_div(settings.player.fighter.max_hp, 2))
 
     settings.dungeon_level += 1
     message.message('After a rare moment of peace, you descend deeper into ' +
@@ -147,22 +231,55 @@ def msgbox(text, width=50):
     menu(text, [], width)
 
 
-def inventory_menu(header):
-    if len(settings.inventory) == 0:
+def inventory_menu(player, header):
+    #Show a menu with each item of the inventory as an option
+    if len(settings.player.inventory) == 0:
         options = ['Inventory is empty.']
     else:
         options = []
-        for item in settings.inventory:
-            text = item.name
-            if item.equipment and item.equipment.is_equipped:
-                text = text + ' (on ' + item.equipment.slot + ')'
+        for obj in settings.player.inventory:
+            text = obj.name
+
+            if obj.item.count > 1:
+                text = text + ' (x' + str(obj.item.count) + ')'
+            if obj.equipment and obj.equipment.is_equipped:
+                text = text + ' (on ' + obj.equipment.slot + ')'
             options.append(text)
 
     index = menu(header, options, settings.INVENTORY_WIDTH)
 
-    if index is None or len(settings.inventory) == 0:
+    if index is None or len(settings.player.inventory) == 0:
         return None
-    return settings.inventory[index].item
+    return settings.player.inventory[index].item
+
+# def inventory_menu(obj, header):
+    # #Show a menu with each item of the inventory as an option.
+    # if len(settings.inventory) == 0:
+        # menu(header, 'Inventory is empty.', settings.INVENTORY_WIDTH)
+        # return None
+
+    # options = []
+    # for obj in settings.inventory:
+        # text = obj.name
+        # # Show additional information, in case it's equipped.
+        # if obj.item.count > 1:
+            # text = text + ' (x' + str(obj.item.count) + ')'
+        # if obj.equipment and obj.equipment.is_equipped:
+            # text = text + ' (on ' + obj.equipment.slot + ')'
+        # options.append(text)
+
+    # (char, index) = menu(header, options, INVENTORY_WIDTH)
+
+    # if index is not None:
+        # return player.inventory[index].item
+
+    # if char == ord('x'):
+        # (c2, i2) = renderer.menu('Press the key next to an item to examine it, or any other to cancel.\n', options, INVENTORY_WIDTH)
+        # if i2 is not None and player.inventory[i2].item.description is not None:
+            # # renderer.msgbox(player.inventory[i2].item.description)
+            # log.message(player.inventory[i2].item.description)
+
+    # return None
 
 def _colored_text_list(lines, width):
     """
@@ -184,8 +301,8 @@ def _colored_text_list(lines, width):
         renderer.write_log(lines[offset:length + offset + height],
                            window, 0, 0)
 
-        x = config.SCREEN_WIDTH/2 - width/2
-        y = config.SCREEN_HEIGHT/2 - height/2
+        x = old_div(config.SCREEN_WIDTH,2) - old_div(width,2)
+        y = old_div(config.SCREEN_HEIGHT,2) - old_div(height,2)
         libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.7)
 
         libtcod.console_flush()
@@ -221,13 +338,3 @@ def log_display(width=60):
     """
     _colored_text_list(message.game_msgs, width)
 
-def write_log(messages, window, x, initial_y):
-    y = initial_y
-    for m in messages:
-        libtcod.console_set_default_foreground(window, m.color)
-        line = m.message
-        if m.count > 1:
-            line += ' (x' + str(m.count) + ')'
-        libtcod.console_print_ex(window, x, y, libtcod.BKGND_NONE,
-                                 libtcod.LEFT, line)
-        y += 1

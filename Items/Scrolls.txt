@@ -44,3 +44,12 @@ ITEMS
 [placement
         <0:35>]
 }
+
+{
+[name=scroll of frostbolt]
+[char=#]
+[color=light_blue]
+[use=cast_frostbolt]
+[placement
+    <0:35>]
+}

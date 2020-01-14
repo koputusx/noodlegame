@@ -1,4 +1,5 @@
-class Tile:
+from builtins import object
+class Tile(object):
     def __init__(self, blocked, block_sight=None):
         self.blocked = blocked
 

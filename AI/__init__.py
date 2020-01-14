@@ -1,6 +1,7 @@
-from ConfusedMonster import ConfusedMonster
-from BasicMonster import BasicMonster
-from CountDown import CountDown
+from __future__ import absolute_import
+from .ConfusedMonster import ConfusedMonster
+from .BasicMonster import BasicMonster
+from .CountDown import CountDown
 
 
 AI_type = {'BasicMonster': BasicMonster, 'ConfusedMonster': ConfusedMonster,

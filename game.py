@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import libtcodpy as libtcod
 import settings
 import color
@@ -16,11 +18,11 @@ if __name__ == '__main__':
         libtcod.image_blit_2x(img, 0, 0, 0)
 
         libtcod.console_set_default_foreground(0, color.light_yellow)
-        libtcod.console_print_ex(0, settings.SCREEN_WIDTH / 2,
-                                 settings.SCREEN_HEIGHT / 2 - 4,
+        libtcod.console_print_ex(0, old_div(settings.SCREEN_WIDTH, 2),
+                                 old_div(settings.SCREEN_HEIGHT, 2) - 4,
                                  libtcod.BKGND_NONE, libtcod.CENTER,
                                  'INFINITE CAVERNS OF NOODLES')
-        libtcod.console_print_ex(0, settings.SCREEN_WIDTH / 2,
+        libtcod.console_print_ex(0, old_div(settings.SCREEN_WIDTH, 2),
                                  settings.SCREEN_HEIGHT - 2,
                                  libtcod.BKGND_NONE, libtcod.CENTER,
                                  'by kopu, with help of hkas, roguelike tutorial and tutmut')

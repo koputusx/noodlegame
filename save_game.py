@@ -9,7 +9,7 @@ def save_game():
     file['map'] = settings.map
     file['objects'] = settings.objects
     file['player_index'] = settings.objects.index(settings.player)
-    file['inventory'] = settings.inventory
+    file['inventory'] = settings.player.inventory
     file['game_msgs'] = message.game_msgs
     file['game_state'] = settings.game_state
     file['stairs_index'] = settings.objects.index(settings.stairs)

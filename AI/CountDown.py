@@ -1,8 +1,10 @@
+from builtins import str
+from builtins import object
 import message
 import color
 
 
-class CountDown:
+class CountDown(object):
 
     def __init__(self, result, num_turns=3):
         self.result = result

@@ -1,3 +1,4 @@
+from builtins import range
 import settings
 import GameObject
 import actions
@@ -5,6 +6,47 @@ import copy
 from import_monsters import monsters, packs
 from import_items import items
 
+
+def place_specific_monster(rect, specific_monster):
+    #this functions purpose is to insert a specific monster or item to a random or specific part of the map
+    #pass
+    
+    max_monster = 1 #from_dungeon_level([[2, 1], [3, 4], [5, 6]])
+
+    num_monsters = settings.RNG.get_int(0, max_monster)
+
+    for i in range(num_monsters):
+        x = settings.RNG.get_int(rect.x1 + 1, rect.x2 - 1)
+        y = settings.RNG.get_int(rect.y1 + 1, rect.y2 - 1)
+
+
+        if not actions.is_blocked(x, y):
+            choice = specific_monster
+            monster = copy.deepcopy(monsters[choice])
+            monster.x = x
+            monster.y = y
+            if choice in packs:
+                place_pack(monster)
+            settings.objects.append(monster)
+
+
+def place_specific_item(rect, specific_item):
+    max_items = 1 #from_dungeon_level([[1, 1], [2, 4]])
+
+    num_items = settings.RNG.get_int(0, max_items)
+
+    for i in range(num_items):
+        x = settings.RNG.get_int(rect.x1 + 1, rect.x2 - 1)
+        y = settings.RNG.get_int(rect.y1 + 1, rect.y2 - 1)
+
+        if not actions.is_blocked(x, y):
+            choice = specific_item
+            item = copy.deepcopy(items[choice])
+            item.x = x
+            item.y = y
+            settings.objects.append(item)
+            item.send_to_back()
+            item.always_visible = True
 
 def place_objects(rect):
     max_monster = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
@@ -79,8 +121,8 @@ def place_pack(monster):
 
 
 def random_choice(chances_dict):
-    chances = chances_dict.values()
-    strings = chances_dict.keys()
+    chances = list(chances_dict.values())
+    strings = list(chances_dict.keys())
 
     return strings[random_choice_index(chances)]
 

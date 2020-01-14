@@ -1,19 +1,27 @@
+from __future__ import print_function
+from __future__ import division
 # Note - x0,y0 is the North West
+from builtins import range
+from past.utils import old_div
 import settings
 import color
 from place_objects import place_objects
+from place_objects import place_specific_monster
 from GameObject import GameObject
 from Tile import Tile
 from Rect import Rect
 import sys
 #import libtcodpy as libtcod
+from import_monsters import monsters, packs
+from import_items import items
+
 
 def make_map(corner=0):
     settings.objects = [settings.player]
-    settings.map = [[Tile(True) for y in range(settings.MAP_HEIGHT)]
-                    for x in range(settings.MAP_WIDTH)]
-    settings.flood_map = [[-1 for y in range(settings.MAP_HEIGHT)]
-                          for x in range(settings.MAP_WIDTH)]
+    settings.map = [[Tile(True) for y in range(settings.MAP_HEIGHT)]  #
+                    for x in range(settings.MAP_WIDTH)]               #why are these repeated here?
+    settings.flood_map = [[-1 for y in range(settings.MAP_HEIGHT)]    #
+                          for x in range(settings.MAP_WIDTH)]         #
     rooms = []
     num_rooms = 1
 
@@ -25,20 +33,20 @@ def make_map(corner=0):
     h = settings.RNG.get_int(settings.ROOM_MIN_SIZE,
                              settings.ROOM_MAX_SIZE)
     if corner == 0:   # North West
-        x = settings.RNG.get_int(0, (settings.MAP_WIDTH - w - 1) / 3)
-        y = settings.RNG.get_int(0, (settings.MAP_HEIGHT - h - 1) / 3)
+        x = settings.RNG.get_int(0, old_div((settings.MAP_WIDTH - w - 1), 3))
+        y = settings.RNG.get_int(0, old_div((settings.MAP_HEIGHT - h - 1), 3))
     elif corner == 1:   # North East
-        x = settings.RNG.get_int(settings.MAP_WIDTH / 3,
+        x = settings.RNG.get_int(old_div(settings.MAP_WIDTH, 3),
                                  settings.MAP_WIDTH - w - 1)
-        y = settings.RNG.get_int(0, (settings.MAP_HEIGHT - h - 1) / 3)
+        y = settings.RNG.get_int(0, old_div((settings.MAP_HEIGHT - h - 1), 3))
     elif corner == 2:   # South West
-        x = settings.RNG.get_int(0, (settings.MAP_WIDTH - w - 1) / 3)
-        y = settings.RNG.get_int(settings.MAP_HEIGHT / 3,
+        x = settings.RNG.get_int(0, old_div((settings.MAP_WIDTH - w - 1), 3))
+        y = settings.RNG.get_int(old_div(settings.MAP_HEIGHT, 3),
                                  settings.MAP_HEIGHT - h - 1)
     elif corner == 3:   # South East
-        x = settings.RNG.get_int(settings.MAP_WIDTH / 3,
+        x = settings.RNG.get_int(old_div(settings.MAP_WIDTH, 3),
                                  settings.MAP_WIDTH - w - 1)
-        y = settings.RNG.get_int(settings.MAP_HEIGHT / 3,
+        y = settings.RNG.get_int(old_div(settings.MAP_HEIGHT, 3),
                                  settings.MAP_HEIGHT - h - 1)
 
     new_room = Rect(x, y, w, h)
@@ -58,7 +66,7 @@ def make_map(corner=0):
         new_room = Rect(0, 0, w, h)
         (prev_x, prev_y) = rooms[num_rooms - backtrack].center
         distance_varience = settings.RNG.get_int(0, 3)
-        wiggle = settings.RNG.get_int(0, w + h) - (w + h) / 2
+        wiggle = settings.RNG.get_int(0, w + h) - old_div((w + h), 2)
         if direction == 1:   # North
             new_room.move_by_center(prev_x - wiggle,
                                     prev_y - h - distance_varience)
@@ -115,6 +123,8 @@ def make_map(corner=0):
                              color.white, always_visible=True)
     settings.objects.append(settings.stairs)
     settings.stairs.send_to_back()
+    print(stairs_rect)
+    place_specific_monster(Rect(cx, cy, 1, 1), 'test_monster')
     #for y in range(0, settings.MAP_HEIGHT):
         #for x in range(0, settings.MAP_WIDTH):
             #if settings.map[x][y].blocked:
@@ -125,8 +135,8 @@ def make_map(corner=0):
     return map, GameObject, settings.stairs
 
 def create_room(room):
-    for x in range(room.x1 + 1, room.x2):
-        for y in range(room.y1 + 1, room.y2):
+    for x in range(int(room.x1 + 1), int(room.x2)):
+        for y in range(int(room.y1 + 1), int(room.y2)):
             settings.map[x][y].blocked = False
             settings.map[x][y].block_sight = False
             settings.flood_map[x][y] = 0

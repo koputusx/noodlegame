@@ -1,4 +1,5 @@
-class RangedMonster:
+from builtins import object
+class RangedMonster(object):
     #AI for monster using ranged attacks.
     def take_turn(self):
         #monster takes it's turn. if you can see it, it can see you

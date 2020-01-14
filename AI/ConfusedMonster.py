@@ -1,9 +1,9 @@
-
+from builtins import object
 import libtcodpy as libtcod
 import message
 
 
-class ConfusedMonster:
+class ConfusedMonster(object):
 
     def __init__(self, old_ai, num_turns=10):
         self.old_ai = old_ai

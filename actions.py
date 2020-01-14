@@ -1,8 +1,14 @@
+from builtins import str
+from builtins import range
 import libtcodpy as libtcod
+import copy
+
 import settings
+import color
 import message
 from component import *
 import random
+
 
 def move(obj, dx, dy):
     #moves object by (dx, dy)
@@ -146,7 +152,7 @@ def heal(obj, amount):
     if obj.hp > obj.max_hp:
         obj.hp = obj.max_hp
 
-def attack(fighter, target):
+def attack(obj, target):
     #a formula for attack damage
     #attacker to-hit roll:
     to_hit_roll = random.randint(1, 6) + fighter.reflex
@@ -181,6 +187,10 @@ def attack(fighter, target):
     else: #attack misses
         message.message(fighter.owner.name.capitalize() + ' missed!')
 
+def attack_n(obj, target):
+    for x in range(obj.attack_num):
+        attack(obj, target)
+
 def inflict_damage(actor, fighter, damage):
     if damage > 0:
         fighter.hp -= damage
@@ -200,15 +210,120 @@ def is_blocked(x, y):
             return True
     
     return False
+
+def pick_up(actor, obj, report=True):
+    for p in actor.inventory:
+        if obj.item.can_combine(p):
+            p.item.count += obj.item.count
+            settings.objects.remove(obj)
+            if report:
+                message.message(actor.name.capitalize() + ' picked up ' + obj.name + '.',
+                                color.green)
+            return True
+
+    if len(actor.inventory) >= 26:
+        message.message('Your inventory is full, you cannot pick up ' +
+                        obj.name + '.', color.red)
+    else:
+        actor.inventory.append(obj)
+        settings.objects.remove(obj)
+        message.message('You picked up a ' + obj.name + '.',
+                        color.green)
+
+        equipment = obj.equipment
+        #melee_weapon = self.owner.melee_weapon
+        if equipment and get_equipped_in_slot(actor, equipment.slot) is None:
+            equip(actor, equipment)
+        return True
+        #elif melee_weapon and get_equipped_in_melee_slot(melee_weapon.slot) is None:
+            #melee_weapon.equip()
+
+def drop(actor, obj, report=True):
+    #remove the object from actor inventory and add it to the map 
+    #at players coordinates
+    #if it is equipment, dequip before dropping
+    must_split = False
+    if obj.item.count > 1:
+        obj.item.count -= 1
+        must_split = True
+    else:
+        if obj.equipment:
+            dequip(actor, obj.equipment)
+        actor.inventory.remove(obj)
+
+    #if self.owner.melee_weapon:
+        #self.owner.melee_weapon.dequip()
+    
+    combined = False
+    for p in settings.objects:
+        if (p.x and p.y) == (actor.x and actor.y) and obj.item.can_combine(p):
+            p.item.count += 1
+            combined = True
+            break			
+
+    if not combined:
+        new_obj = obj
+        if must_split:
+            new_obj = copy.deepcopy(obj)
+        new_obj.item.count = 1
+        new_obj.x = actor.x
+        new_obj.y = actor.y
+        settings.objects.append(new_obj)
+    # settings.objects.append(obj)
+    # actor.inventory.remove(obj)
+    # obj.x = settings.player.x
+    # obj.y = settings.player.y
+    message.message('You dropped a ' + obj.name + '.', color.yellow)
+
+def use(actor, obj, report=True):
+    if obj.equipment:
+        toggle_equip(actor, obj.equipment)
+        return
+
+    #elif self.owner.melee_weapon:
+        #self.owner.melee_weapon.toggle_equip()
+        #return
+
+    if obj.item.use_function is None:
+        message.message('The ' + obj.owner.name + ' cannot be used. ')
+    else:
+        if obj.item.use_function() != 'cancelled':
+            if obj.item.count > 1:
+                obj.item.count -= 1
+            else:
+                actor.inventory.remove(obj)
         
+def toggle_equip(actor, eqp):
+    if eqp.is_equipped:
+        dequip(actor, eqp)
+    else:
+        equip(actor, eqp)
 
+def equip(actor, eqp):
+    #equip object. ensure only one object per slot
+    old_equipment = get_equipped_in_slot(actor, eqp.slot)
+    if old_equipment is not None:
+        dequip(actor, old_equipment)
 
+    eqp.is_equipped = True
+    message.message('Equipped ' + eqp.owner.name + ' on ' +
+                    eqp.slot + '.', color.light_green)
 
+def dequip(actor, eqp):
+    if not eqp.is_equipped:
+        return
+    eqp.is_equipped = False
+    message.message('Dequipped ' + eqp.owner.name + ' from ' +
+                    eqp.slot + '.', color.yellow)
 
-def get_equipped_in_slot(slot):
-    for obj in settings.inventory:
-        if (obj.equipment and obj.equipment.slot == slot and
-                obj.equipment.is_equipped):
-            return obj.equipment
+def get_equipped_in_slot(actor, slot):
+    #returns Equipment in a slot, or None
+
+    if hasattr(actor, 'inventory'):
+        for obj in actor.inventory:
+            if obj.equipment and obj.equipment.slot == slot and obj.equipment.is_equipped:
+                return obj.equipment
+    return None
+
 
 

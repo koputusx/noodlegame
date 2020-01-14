@@ -14,6 +14,7 @@ MONSTERS
     <regr=1>
     <rega=1>
     <mslh=0>
+    <an=1>
     <mprb=10>
 	<xp=35>
     <wcount=0>
@@ -37,6 +38,7 @@ MONSTERS
     <regr=1>
     <rega=1>
     <mslh=0>
+    <an=1>
     <mprb=10>
 	<xp=100>
     <wcount=0>
@@ -62,6 +64,7 @@ MONSTERS
     <regr=1>
     <rega=1>
     <mslh=0>
+    <an=1>
     <mprb=10>
 	<xp=10>
     <wcount=0>
@@ -70,4 +73,53 @@ MONSTERS
 [placement
 	<0:20>]
 [pack=3:5]
+}
+
+{
+[name=jackal]
+[char=J]
+[color=darker_red]
+[speed=2]
+[blocks]
+[fighter
+    <hp=10>
+	<def=1>
+	<str=2>
+    <ref=3>
+    <regr=1>
+    <rega=1>
+    <mslh=0>
+    <an=2>
+    <mprb=10>
+	<xp=10>
+    <wcount=0>
+	<death=basic_death>]
+[ai=BasicMonster]
+[placement
+	<1:20>]
+[pack=3:5]
+}
+
+{
+[name=test_monster]
+[char=T]
+[color=pink]
+[speed=0]
+[blocks]
+[fighter
+	<hp=15>
+	<def=4>
+	<str=5>
+    <ref=3>
+    <regr=1>
+    <rega=1>
+    <mslh=0>
+    <an=1>
+    <mprb=10>
+	<xp=35>
+    <wcount=0>
+	<death=basic_death>]
+[ai=BasicMonster]
+[placement
+	<0:0>]
 }

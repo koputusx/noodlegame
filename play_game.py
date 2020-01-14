@@ -1,3 +1,4 @@
+from builtins import str
 import libtcodpy as libtcod
 import settings
 import color
@@ -32,6 +33,9 @@ def play_game():
             for object in settings.objects:
                 if object.ai:
                     object.ai.take_turn()
+
+            settings.TURN_COUNT += 1
+            print(settings.TURN_COUNT)
 
 
 def check_level_up():

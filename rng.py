@@ -1,7 +1,11 @@
+from __future__ import print_function
+from builtins import str
+from builtins import range
+from builtins import object
 import libtcodpy as libtcod
 
 
-class rng():
+class rng(object):
 
     def __init__(self, seed=12271990):
         self.rnd = libtcod.random_new_from_seed(seed, algo=libtcod.RNG_MT)

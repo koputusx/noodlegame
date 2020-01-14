@@ -4,6 +4,7 @@
 #Append them using message.message().
 
 
+from builtins import object
 import textwrap
 import settings
 import color
